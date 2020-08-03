@@ -7,12 +7,13 @@ from neuron import generate_network, get_neighborhood, get_route
 from distance import select_closest, euclidean_distance, route_distance
 from plot import plot_network, plot_route
 
+
 def main():
     if len(argv) != 2:
         print("Correct use: python src/main.py <filename>.tsp")
         return -1
 
-    problem = read_tsp(argv[1])
+    problem = read_tsp(argv[1])  # 读取城市坐标数据
 
     route = som(problem, 100000)
 
@@ -32,22 +33,23 @@ def som(problem, iterations, learning_rate=0.8):
     cities[['x', 'y']] = normalize(cities[['x', 'y']])
 
     # The population size is 8 times the number of cities
-    n = cities.shape[0] * 8
+    n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
 
     # Generate an adequate network of neurons:
-    network = generate_network(n)
+    network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
 
     for i in range(iterations):
         if not i % 100:
+            # "\r"回车，将光标移到本行开头，大概就是覆盖了吧
             print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
         # Choose a random city
         city = cities.sample(1)[['x', 'y']].values
         winner_idx = select_closest(network, city)
         # Generate a filter that applies changes to the winner's gaussian
-        gaussian = get_neighborhood(winner_idx, n//10, network.shape[0])
+        gaussian = get_neighborhood(winner_idx, n // 10, network.shape[0])
         # Update the network's weights (closer to the city)
-        network += gaussian[:,np.newaxis] * learning_rate * (city - network)
+        network += gaussian[:, np.newaxis] * learning_rate * (city - network)
         # Decay the variables
         learning_rate = learning_rate * 0.99997
         n = n * 0.9997
@@ -59,11 +61,11 @@ def som(problem, iterations, learning_rate=0.8):
         # Check if any parameter has completely decayed.
         if n < 1:
             print('Radius has completely decayed, finishing execution',
-            'at {} iterations'.format(i))
+                  'at {} iterations'.format(i))
             break
         if learning_rate < 0.001:
             print('Learning rate has completely decayed, finishing execution',
-            'at {} iterations'.format(i))
+                  'at {} iterations'.format(i))
             break
     else:
         print('Completed {} iterations.'.format(iterations))
@@ -73,6 +75,7 @@ def som(problem, iterations, learning_rate=0.8):
     route = get_route(cities, network)
     plot_route(cities, route, 'diagrams/route.png')
     return route
+
 
 if __name__ == '__main__':
     main()

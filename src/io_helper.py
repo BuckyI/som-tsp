@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def read_tsp(filename):
     """
     Read a file in .tsp format into a pandas DataFrame
@@ -15,13 +16,13 @@ def read_tsp(filename):
 
         # Obtain the information about the .tsp
         i = 0
-        while not dimension or not node_coord_start:
+        while not dimension or not node_coord_start:  # 循环直到获取两个值
             line = lines[i]
             if line.startswith('DIMENSION :'):
-                dimension = int(line.split()[-1])
+                dimension = int(line.split()[-1])  # 城市数目
             if line.startswith('NODE_COORD_SECTION'):
-                node_coord_start = i
-            i = i+1
+                node_coord_start = i  # 结点坐标开始处
+            i = i + 1
 
         print('Problem with {} cities read.'.format(dimension))
 
@@ -30,17 +31,21 @@ def read_tsp(filename):
         # Read a data frame out of the file descriptor
         cities = pd.read_csv(
             f,
-            skiprows=node_coord_start + 1,
+            skiprows=node_coord_start + 1,  # 跳过刚开始的几行
             sep=' ',
             names=['city', 'y', 'x'],
-            dtype={'city': str, 'x': np.float64, 'y': np.float64},
+            dtype={
+                'city': str,
+                'x': np.float64,
+                'y': np.float64
+            },
             header=None,
-            nrows=dimension
-        )
+            nrows=dimension)
 
         # cities.set_index('city', inplace=True)
 
         return cities
+
 
 def normalize(points):
     """
@@ -50,7 +55,8 @@ def normalize(points):
     initial offset and normalizing the points in a proportional interval: [0,1]
     on y, maintining the original ratio on x.
     """
-    ratio = (points.x.max() - points.x.min()) / (points.y.max() - points.y.min()), 1
+    ratio = (points.x.max() - points.x.min()) / (points.y.max() -
+                                                 points.y.min()), 1
     ratio = np.array(ratio) / max(ratio)
     norm = points.apply(lambda c: (c - c.min()) / (c.max() - c.min()))
     return norm.apply(lambda p: ratio * p, axis=1)
