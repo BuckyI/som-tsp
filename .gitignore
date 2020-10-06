@@ -197,3 +197,6 @@ venv.bak/
 .mypy_cache/
 
 # End of https://www.gitignore.io/api/macos,emacs,python
+
+# 下面是自定义的
+*.png
