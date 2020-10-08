@@ -2,18 +2,32 @@ import numpy as np
 
 
 def select_closest(candidates, origin):
-    """Return the index of the closest candidate to a given point."""
+    """
+    candidates: [numpy.ndarray] size*2 it is actually all the neurons\n
+    origin: [numpy.ndarray] 1*2 it is the chosen city\n
+    return: [int] at the given city, the nearest neuron's index\n
+    
+    检索array中最小值的位置，并返回其下标值，即找到最相似neuron\n
+    Return the index of the closest candidate to a given point.\n
+    """
     return euclidean_distance(candidates, origin).argmin()
-    # 检索数组中最小值的位置，并返回其下标值
 
 
 def euclidean_distance(a, b):
-    """Return the array of distances of two numpy arrays of points."""
-    return np.linalg.norm(a - b, axis=1)  # 求行向量范数，算数平方和，
+    """
+    a, b = candidates, origin\n
+    求a-b每一行的算数平方和开根号，也就是行向量之间的欧几里德距离了。\n
+    Return the array of distances of two numpy arrays of points.\n
+    """
+    return np.linalg.norm(a - b, axis=1)
 
 
 def route_distance(cities):
-    """Return the cost of traversing a route of cities in a certain order."""
+    """
+    cities: [DataFrame] 排好顺序的城市\n
+    Return the cost of traversing a route of cities in a certain order.\n
+    """
     points = cities[['x', 'y']]
     distances = euclidean_distance(points, np.roll(points, 1, axis=0))
+    # 按行移1位后比较距离，也就是相邻 city 的距离了
     return np.sum(distances)
