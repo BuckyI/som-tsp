@@ -40,7 +40,7 @@ def read_tsp(filename):
                 'y': np.float64
             },
             header=None,  # if col names are passed explicitly, header=None.
-            nrows=dimension # Number of rows of file to read. )
+            nrows=dimension)  # Number of rows of file to read.
 
         # cities.set_index('city', inplace=True)
 
@@ -54,8 +54,8 @@ def normalize(points):
 
     Return the normalized version of a given vector of points.\n
 
-    For a given array of n-dimensions, normalize each dimension by removing the\n
-    initial offset and normalizing the points in a proportional interval: [0,1]\n
+    For a given array of n-dimensions, normalize each dimension by removing the
+    initial offset and normalizing the points in a proportional interval: [0,1]
     on y, maintining the original ratio on x.\n
     """
     # get a numpy.ndarray:

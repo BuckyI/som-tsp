@@ -4,7 +4,7 @@ import numpy as np
 
 from io_helper import read_tsp, normalize
 from neuron import generate_network, get_neighborhood, get_route
-from distance import select_closest, euclidean_distance, route_distance
+from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route
 
 

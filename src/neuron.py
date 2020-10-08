@@ -45,7 +45,7 @@ def get_neighborhood(center, radix, domain):
 
 def get_route(cities, network):
     """
-    cities: [DataFrame] the normalized set of cities (w/ coord in [0,1]) ['city', 'y', 'x']\n
+    cities: [DataFrame] the normalized set of cities ['city', 'y', 'x']\n
     network: [numpy.ndarray] the trained network with 8*cities neuron\n
     return: [Index] the index of cities\n
     如果有多个城市被分配到了同一个神经元，那么按照下面的代码排序的时候，这几个会按照之前的顺序（所以这里不是最优）\n

@@ -29,9 +29,9 @@ def plot_network(cities, neurons, name='diagram.png', ax=None):
             'r.',  # red dot (actually it's blue!)
             ls='-',  # line style -
             color='#0063ba',
-            markersize=2  # the s of marker is 4)
-
-        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200) # 边框  tight 内边距0
+            markersize=2)  # the s of marker is 4
+        # 边框  tight 内边距 0
+        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200) 
         plt.close()
 
     else:
