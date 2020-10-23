@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import time
 
 
 def arr_plot(arr):
@@ -37,7 +38,7 @@ def generate_target(x_range=(0, 100), y_range=(0, 100)):
     return arr_pd
 
 
-def generate_tsp(data=None, filename="assets/arr.tsp"):
+def generate_tsp(data=None, filename="assets/arr.tsp", comment="hello world"):
     """
     trans panda.DataFrame to .tsp file
     """
@@ -46,7 +47,8 @@ def generate_tsp(data=None, filename="assets/arr.tsp"):
 
     info = {
         "NAME": os.path.basename(filename),
-        "COMMENT": "hello world",
+        "TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "COMMENT": comment,
         "DIMENSION": data.shape[0],  # 行数
     }
 
