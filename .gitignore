@@ -200,3 +200,4 @@ venv.bak/
 
 # 下面是自定义的
 *.png
+*.ipynb

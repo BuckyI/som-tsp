@@ -9,12 +9,14 @@ from plot import plot_network, plot_route
 
 
 def main():
-    # if len(argv) != 2:
-    #     print("Correct use: python src/main.py <filename>.tsp")
-    #     return -1
-
-    # problem = read_tsp(argv[1])  # 读取城市坐标数据
-    problem = read_tsp("assets/arr.tsp")  # 测试用代码
+    if len(argv) != 2:
+        print("Correct use: python src/main.py <filename>.tsp")
+        if len(argv) == 1:
+            problem = read_tsp("assets/arr.tsp")  # 测试用代码
+        else:
+            return -1
+    else:
+        problem = read_tsp(argv[1])  # 读取城市坐标数据
 
     route = som(problem, 100000)  # from neuron 0 开始的路径 index
 
