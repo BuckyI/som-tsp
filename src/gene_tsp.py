@@ -6,16 +6,23 @@ import time
 import tkinter as tk
 
 
-def arr_plot(arr):
+def arr_plot(arr, obs):
     "for testing useful for Dataframe and ndarray"
-    try:
-        x = arr.values[:, 0].tolist()
-        y = arr.values[:, 1].tolist()
-    except AttributeError:
-        x = arr[:, 0].tolist()
-        y = arr[:, 1].tolist()
 
-    plt.plot(x, y)
+    def get_xy(arr):
+        try:
+            x = arr.values[:, 0].tolist()
+            y = arr.values[:, 1].tolist()
+        except AttributeError:
+            x = arr[:, 0].tolist()
+            y = arr[:, 1].tolist()
+        return x, y
+
+    data = get_xy(arr)
+    plt.scatter(data[0], data[1], color="red")
+    data = get_xy(obs)
+    plt.scatter(data[0], data[1], color="black")
+    plt.show()
 
 
 def generate_target(x_range=(0, 100), y_range=(0, 100), way=None):
@@ -71,13 +78,10 @@ def generate_target(x_range=(0, 100), y_range=(0, 100), way=None):
     return pd.DataFrame(arr)
 
 
-def generate_tsp(data=None, filename="assets/arr.tsp", comment="hello world"):
+def generate_tsp(data, filename="assets/arr.tsp", comment="hello world"):
     """
     trans panda.DataFrame to .tsp file
     """
-    if data is None:
-        data = generate_target()
-
     info = {
         "NAME": os.path.basename(filename),
         "TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
@@ -126,7 +130,36 @@ def generate_tour(data,
         f.write("EOF\n")
 
 
+def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
+    """
+    trans DataFrame object to .obs file
+    """
+    info = {
+        "NAME": os.path.basename(filename),
+        "TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "COMMENT": comment,
+        "DIMENSION": data.shape[0],  # 行数
+    }
+
+    with open(filename, "w") as f:
+        for key in info:
+            f.write(key + " : " + str(info[key]) + "\n")
+        f.write("OBSTACLE_SECTION\n")
+        string = data.to_csv(
+            path_or_buf=None,  # 直接写入文件的话，不知为何"EOF\n"的位置会出错
+            sep=" ",
+            na_rep="0",
+            float_format="%.4f",
+            header=False,
+            mode="a+",
+            line_terminator="\n")  # python 中\n\r 换两行！
+        f.write(string)
+        f.write("EOF\n")
+
+
 if __name__ == "__main__":
-    arr = generate_target()
-    arr_plot(arr)
+    arr = generate_target(way="gui")
+    obs = generate_target(way="gui")
+    arr_plot(arr, obs)
     generate_tsp(arr)
+    generate_obs(obs)
