@@ -6,6 +6,7 @@ from io_helper import read_tsp, normalize
 from neuron import generate_network, get_neighborhood, get_route
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route
+from gene_tsp import generate_tour
 
 
 def main():
@@ -25,6 +26,7 @@ def main():
     distance = route_distance(problem)  # 计算城市按照当前路径的距离
 
     print('Route found of length {}'.format(distance))
+    generate_tour(route, length=distance)
 
 
 def som(problem, iterations, learning_rate=0.8):

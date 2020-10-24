@@ -89,15 +89,44 @@ def generate_tsp(data=None, filename="assets/arr.tsp", comment="hello world"):
         for key in info:
             f.write(key + " : " + str(info[key]) + "\n")
         f.write("NODE_COORD_SECTION\n")
-    data.to_csv(filename,
-                sep=" ",
-                na_rep="0",
-                float_format="%.4f",
-                header=False,
-                mode="a+")
+        string = data.to_csv(
+            path_or_buf=None,  # 直接写入文件的话，不知为何"EOF\n"的位置会出错
+            sep=" ",
+            na_rep="0",
+            float_format="%.4f",
+            header=False,
+            mode="a+",
+            line_terminator="\n")  # python 中\n\r 换两行！
+        f.write(string)
+        f.write("EOF\n")
+
+
+def generate_tour(data,
+                  filename="assets/tour.tour",
+                  length=-1,
+                  comment="hello world"):
+    """
+    data: [pandas.core.indexes.range.RangeIndex] list type works too!!
+    trans index object to .tour file
+    这个和下载到的.TOUR文件不是完全一样，不知道他们是怎么使用的，最后以-1结尾
+    """
+    info = {
+        "NAME": os.path.basename(filename),
+        "TIME": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "LENGTH": length,
+        "COMMENT": comment,
+        "DIMENSION": len(data),  # 行数
+    }
+
+    with open(filename, "w") as f:
+        for key in info:
+            f.write(key + " : " + str(info[key]) + "\n")
+        f.write("TOUR_SECTION\n")
+        f.write("\n".join([str(i) for i in list(data)]) + "\n")
+        f.write("EOF\n")
 
 
 if __name__ == "__main__":
-    arr = generate_target(way="gui")
+    arr = generate_target()
     arr_plot(arr)
     generate_tsp(arr)
