@@ -101,9 +101,9 @@ def som(problem, iterations, learning_rate=0.8):
                   'at {} iterations'.format(i))
             break
         if np.linalg.norm(delta, axis=1).mean() < gate:  # 当迭代变化平均值小于设定的精度时停止
-            print(
-                "The average difference of neuron has reduced to {}, finishing execution"
-                .format(gate))
+            print("Average movement of neuron has reduced to {},".format(gate),
+                  "finishing execution at {} iterations".format(i))
+
             break
     else:
         print('Completed {} iterations.'.format(iterations))
