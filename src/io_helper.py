@@ -58,6 +58,7 @@ def normalize(points):
     initial offset and normalizing the points in a proportional interval: [0,1]
     on y, maintining the original ratio on x.\n
     """
+    # 这部分其实挺奇怪的，为啥不直接用 max(points.max()-points.min()) 呢
     # get a numpy.ndarray:
     # if DeltaX > DeltaY, then ratio=[1, DeltaY/DeltaX]
     # if DeltaX < DeltaY, then ratio=[DeltaX/DeltaY, 1]
