@@ -47,6 +47,46 @@ def read_tsp(filename):
         return cities
 
 
+def read_obs(filename):
+    """
+    Read a file in .obs format into a pandas DataFrame\n
+    """
+    with open(filename) as f:
+        start = None
+        dimension = None
+        lines = f.readlines()  # 列表每个元素是一行
+
+        # Obtain the information about the .tsp
+        i = 0
+        while not dimension or not start:  # 循环直到获取两个值
+            line = lines[i]
+            if line.startswith('DIMENSION :'):
+                dimension = int(line.split()[-1])  # 障碍物数目
+            if line.startswith('OBSTACLE_SECTION'):
+                start = i  # 结点坐标开始处
+            i = i + 1
+
+        print('Environment with {} obstacles read.'.format(dimension))
+
+        f.seek(0)  # 指针回到开头，刚才readlines到达EOF了
+
+        # Read a data frame out of the file descriptor
+        obstacles = pd.read_csv(
+            f,
+            skiprows=start + 1,  # 跳过刚开始的几行
+            sep=' ',
+            names=['obstacle', 'y', 'x'],
+            dtype={
+                'obstacle': str,
+                'x': np.float64,
+                'y': np.float64
+            },
+            header=None,  # if col names are passed explicitly, header=None.
+            nrows=dimension)  # Number of rows of file to read.
+
+        return obstacles
+
+
 def normalize(points):
     """
     points: DataFrame type `normalize(cities[['x', 'y']])`\n

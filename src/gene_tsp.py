@@ -19,9 +19,9 @@ def arr_plot(arr, obs):
         return x, y
 
     data = get_xy(arr)
-    plt.scatter(data[0], data[1], color="red")
+    plt.scatter(data[1], data[0], color="red")
     data = get_xy(obs)
-    plt.scatter(data[0], data[1], color="black")
+    plt.scatter(data[1], data[0], color="black")
     plt.show()
 
 
@@ -35,7 +35,7 @@ def generate_target(x_range=(0, 100), y_range=(0, 100), way=None):
             x, y = event.x, event.y
             var.set(str(x) + "," + str(y))
             print("\rclick position", x, y, end="")
-            points.append((event.x, event.y))
+            points.append((event.y, event.x))  # 为了适应.tsp文件中的坐标顺序
 
         points = []
 
