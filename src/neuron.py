@@ -58,3 +58,12 @@ def get_route(cities, network):
     )
     # 先按照'winner'排序（神经元顺序），然后返回index，即对应的城市顺序
     return cities.sort_values('winner').index
+
+
+def get_ob_influence(ob, point, sigma=10, k=0.434):
+    """
+    k*sigma^2 determines the range of gaussian
+    """
+    distances = ob - point
+    weighed_influence = np.exp(-distances**2 / (k * sigma**2))
+    return weighed_influence.sum(axis=0)

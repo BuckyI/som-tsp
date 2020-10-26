@@ -21,7 +21,7 @@ def plot_network(cities, neurons, name='diagram.png', ax=None):
         plt.axis('off')  # 关闭坐标轴
 
         # city 以点的形式
-        axis.scatter(cities['x'], cities['y'], color='red', s=4)
+        axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         # neuron 以线的形式
         axis.plot(
             neurons[:, 0],  # x
@@ -29,19 +29,23 @@ def plot_network(cities, neurons, name='diagram.png', ax=None):
             'r.',  # red dot (actually it's blue!)
             ls='-',  # line style -
             color='#0063ba',
+            label="neuron",
             markersize=2)  # the s of marker is 4
         # 边框  tight 内边距 0
-        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200) 
+        plt.legend()
+        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
 
     else:
-        ax.scatter(cities['x'], cities['y'], color='red', s=4)
+        ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         ax.plot(neurons[:, 0],
                 neurons[:, 1],
                 'r.',
                 ls='-',
                 color='#0063ba',
+                label="neuron",
                 markersize=2)
+        plt.legend()
         return ax
 
 
@@ -56,21 +60,27 @@ def plot_route(cities, route, name='diagram.png', ax=None):
         axis.set_aspect('equal', adjustable='datalim')
         plt.axis('off')
         # 画出城市点
-        axis.scatter(cities['x'], cities['y'], color='red', s=4)
+        axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         # old route is pd's index Object, new route is ordered cities
         route = cities.reindex(route)
         # 在 DataFrame route 末尾添加一行，赋开头的值，这样路线首尾相连
         # 为什么画 network 不需要呢？是因为 neurons 太多了看不出来首尾没连~
         route.loc[route.shape[0]] = route.iloc[0]
         # 画出路径线
-        axis.plot(route['x'], route['y'], color='purple', linewidth=1)
+        axis.plot(route['x'],
+                  route['y'],
+                  color='purple',
+                  linewidth=1,
+                  label="route")
 
+        plt.legend()
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
 
     else:
-        ax.scatter(cities['x'], cities['y'], color='red', s=4)
+        ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         route = cities.reindex(route)
         route.loc[route.shape[0]] = route.iloc[0]
         ax.plot(route['x'], route['y'], color='purple', linewidth=1)
+        plt.legend()
         return ax
