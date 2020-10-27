@@ -42,7 +42,7 @@ def read_tsp(filename):
             header=None,  # if col names are passed explicitly, header=None.
             nrows=dimension)  # Number of rows of file to read.
 
-        # cities.set_index('city', inplace=True)
+        # cities.set_index('city', inplace=True)  # 把 city 列设为索引，直接对源array进行修改。
 
         return cities
 
@@ -56,7 +56,7 @@ def read_obs(filename):
         dimension = None
         lines = f.readlines()  # 列表每个元素是一行
 
-        # Obtain the information about the .tsp
+        # Obtain the information about the .obs
         i = 0
         while not dimension or not start:  # 循环直到获取两个值
             line = lines[i]
