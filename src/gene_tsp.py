@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 import tkinter as tk
+import plot as p
 
 
 def arr_plot(arr, obs):
@@ -19,18 +20,21 @@ def arr_plot(arr, obs):
         return x, y
 
     data = get_xy(arr)
-    plt.scatter(data[1], data[0], color="red")
+    plt.scatter(data[1], data[0], color="red", label="city")
     data = get_xy(obs)
-    plt.scatter(data[1], data[0], color="black")
+    plt.scatter(data[1], data[0], color="black", label="obstacle")
+    plt.legend()
     plt.show()
 
 
-def generate_target(x_range=(0, 100), y_range=(0, 100), way=None):
+def generate_target(x_range=(0, 100), y_range=(0, 100), way=None, info=""):
     """
     generate the travel target for the sales man
+    return: [DataFrame] note y,x
     """
     def gui_get_points():
-        """generate a gui window and click to get a list of points"""
+        """generate a gui window and click to get a list of points
+        目前发现使用matplotlib更好，这个不需要了"""
         def callback(event):
             x, y = event.x, event.y
             var.set(str(x) + "," + str(y))
@@ -71,7 +75,9 @@ def generate_target(x_range=(0, 100), y_range=(0, 100), way=None):
         return w_del
 
     if way == "gui":
-        arr = np.array(gui_get_points())
+        # arr = np.array(gui_get_points())
+        arr = np.array(p.input_points(x_range, y_range, info))
+        arr[:, [0, 1]] = arr[:, [1, 0]]  # 两列交换位置，为 y,x
     else:
         arr = get_circle()
 
@@ -158,8 +164,8 @@ def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
 
 
 if __name__ == "__main__":
-    arr = generate_target(way="gui")
-    obs = generate_target(way="gui")
+    arr = generate_target(way="gui", info="get cities")
+    obs = generate_target(way="gui", info="get obstacles")
     arr_plot(arr, obs)
     generate_tsp(arr)
     generate_obs(obs)

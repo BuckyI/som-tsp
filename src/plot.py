@@ -2,6 +2,24 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
+def input_points(x_range=(0, 100),
+                 y_range=(0, 100),
+                 title="left click: get point, right: cancel, mid: finish"):
+    """
+    x_range, y_range: [tuple] (start,end)
+    title: [str] information of the points
+    return: list of tuple (x, y)
+    """
+    fig = plt.figure()
+    axis = fig.subplots()
+    axis.set_xlim(x_range[0], x_range[1])
+    axis.set_ylim(y_range[0], y_range[1])
+    axis.set_title(title)
+    result = axis.figure.ginput(-1)
+    plt.close()
+    return result
+
+
 def update_figure(axis=None):
     """
     axis: [matplotlib.axes._axes.Axes] The axis to be updated
