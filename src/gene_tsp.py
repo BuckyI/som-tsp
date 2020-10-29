@@ -27,6 +27,42 @@ def arr_plot(arr, obs):
     plt.show()
 
 
+def generate(x_range=(0, 100), y_range=(0, 100)):
+    """使用matplotlib一次性获取city 和obstacle，同步显示"""
+    plt.ion()
+    fig = plt.figure()
+    axis = fig.subplots()
+    axis.set_xlim(x_range[0], x_range[1])
+    axis.set_ylim(y_range[0], y_range[1])
+
+    axis.set_title("get city")
+    city = []
+    while True:
+        data = axis.figure.ginput(1)
+        if not data:
+            break
+        else:
+            data = data[0]
+        city.append(data)
+        plt.scatter(data[0], data[1], marker="o", color="#6495ED", s=10)
+    city = pd.DataFrame(city, columns=["x", "y"])
+
+    axis.set_title("get obstacle")
+    obs = []
+    while True:
+        data = axis.figure.ginput(1)
+        if not data:
+            break
+        else:
+            data = data[0]
+        obs.append(data)
+        plt.scatter(data[0], data[1], marker="x", color="#DC143C", s=10)
+    obs = pd.DataFrame(obs, columns=["x", "y"])
+    plt.close()
+    plt.ioff()
+    return city, obs
+
+
 def generate_target(x_range=(0, 100), y_range=(0, 100), way=None, info=""):
     """
     generate the travel target for the sales man
@@ -166,8 +202,7 @@ def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
 
 
 if __name__ == "__main__":
-    arr = generate_target(way="gui", info="get cities")
-    obs = generate_target(way="gui", info="get obstacles")
+    arr, obs = generate()
     arr_plot(arr, obs)
     generate_tsp(arr)
     generate_obs(obs)
