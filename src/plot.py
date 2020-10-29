@@ -48,7 +48,8 @@ def update_figure(axis=None, clean=False):
     return axis
 
 
-def plot_network(cities, neurons, name='diagram.png', axes=None):
+def plot_network(cities, neurons, name='diagram.png', axes=None,
+                 **environment):
     """
     cities: [DataFrame] 归一化之后的
     neurons: [ndarray] the network
@@ -68,21 +69,22 @@ def plot_network(cities, neurons, name='diagram.png', axes=None):
         axes.set_aspect('equal', adjustable='datalim')  # equal: 正方形
         plt.axis('off')  # 关闭坐标轴 建议改成：axis.axis('off')
 
-        plot_process(axes, cities, neurons)
+        plot_process(axes, cities, neurons, environment)
         # save 边框  tight 内边距 0
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
         plt.ion()
     else:
-        plot_process(axes, cities, neurons)
+        plot_process(axes, cities, neurons, environment)
         return axes
 
 
-def plot_process(axes, cities, path):
+def plot_process(axes, cities, path, environment={}):
     """
     cities: [DataFrame] 归一化之后的
     path: [ndarray]/[DataFrame] the network or the result route
     axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
+    environment: [dict] of DataFrame/ndarray
     """
     # city 以点的形式
     axes.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
@@ -100,12 +102,15 @@ def plot_process(axes, cities, path):
         label="path",
         linewidth=1,
         markersize=2)  # the s of marker is 4
+    if environment.get("obstacle", None) is not None:
+        obs = environment["obstacle"]
+        axes.scatter(obs['x'], obs['y'], color='y', s=4, label="obstacle")
     # 更新标签
     axes.legend()
     return axes
 
 
-def plot_route(cities, route, name='diagram.png', ax=None):
+def plot_route(cities, route, name='diagram.png', ax=None, **environment):
     """Plot a graphical representation of the route obtained"""
     mpl.rcParams['agg.path.chunksize'] = 10000
 
@@ -118,11 +123,11 @@ def plot_route(cities, route, name='diagram.png', ax=None):
         axis.set_aspect('equal', adjustable='datalim')
         plt.axis('off')
 
-        plot_process(axis, cities, route)
+        plot_process(axis, cities, route, environment)
 
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
         plt.ion()
     else:
-        plot_process(axis, cities, route)
+        plot_process(axis, cities, route, environment)
         return ax

@@ -2,8 +2,8 @@ from sys import argv
 
 import numpy as np
 
-from io_helper import read_tsp, normalize
-from neuron import generate_network, get_neighborhood, get_route
+from io_helper import read_tsp, normalize, read_obs
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influence
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -16,6 +16,7 @@ def main():
         print("Correct use: python src/main.py <filename>.tsp")
         if len(argv) == 1:
             problem = read_tsp("assets/arr.tsp")  # 测试用代码
+            obstacle = read_obs("assets/obs.obs")
         else:
             return -1
     else:
@@ -24,7 +25,8 @@ def main():
 
     # 获得路径结果
     start = time.process_time()
-    route_index = som(problem, 100000)  # from neuron 0 开始的路径 index
+    route_index = som(problem, 100000, 0.8,
+                      obstacle)  # from neuron 0 开始的路径 index
     end = time.process_time()
     print('SOM training completed. Running time: %s Seconds' % (end - start))
 
@@ -32,7 +34,8 @@ def main():
     start = time.process_time()
     route = problem.reindex(route_index)
     route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
-    plot_route(problem, route, 'diagrams/route.png')  # 画出路径图
+    plot_route(problem, route, 'diagrams/route.png',
+               obstacle=obstacle)  # 画出路径图
     problem = problem.reindex(route_index)  # 对原始的城市进行重新排序
     distance = route_distance(problem)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
@@ -41,7 +44,7 @@ def main():
     print('Evaluation completed. Running time: %s Seconds' % (end - start))
 
 
-def som(problem, iterations, learning_rate=0.8):
+def som(problem, iterations, learning_rate=0.8, obstacle=None):
     """
     problem: [DataFrame] ['city', 'y', 'x']
     iterations: [int] the max iteration times
@@ -57,8 +60,13 @@ def som(problem, iterations, learning_rate=0.8):
 
     cities[['x', 'y']] = normalize(cities[['x', 'y']])
 
+    if obstacle is not None:
+        obs = obstacle.copy()
+        obs[['x', 'y']] = normalize(obs[['x', 'y']])
+        obs_n = obs[['x', 'y']].to_numpy()
+
     # The population size is 8 times the number of cities
-    n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
+    n = cities.shape[0] * 8 + obs.shape[0] * 5  # 这里是神经元数目，别误解为人口(population)数目
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
@@ -83,8 +91,13 @@ def som(problem, iterations, learning_rate=0.8):
         # Update the network's weights (closer to the city)
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
-        delta = gaussian[:, np.newaxis] * learning_rate * (city - network)
-        network += delta
+        obs_delta = np.apply_along_axis(
+            lambda p: get_ob_influence(obs_n, p, 10 * gate),
+            axis=1,
+            arr=network)
+        city_delta = city - network
+        delta = obs_delta + city_delta
+        network += gaussian[:, np.newaxis] * learning_rate * delta
         # Decay the variables
         # 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997
@@ -96,7 +109,8 @@ def som(problem, iterations, learning_rate=0.8):
             plot_network(cities,
                          network,
                          name='diagrams/{:05d}.png'.format(i),
-                         axes=axes)
+                         axes=axes,
+                         obstacle=obs)
             update_figure(axes, clean=True)
 
         # Check if any parameter has completely decayed.
@@ -116,7 +130,7 @@ def som(problem, iterations, learning_rate=0.8):
     else:
         print('Completed {} iterations.'.format(iterations))
 
-    plot_network(cities, network, name='diagrams/final.png')
+    plot_network(cities, network, name='diagrams/final.png', obstacle=obs)
 
     route = get_route(cities, network)
     return route
