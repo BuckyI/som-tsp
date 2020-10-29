@@ -72,7 +72,8 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
-    gate = 0.01 / dif  # 收敛条件设定，精度的映射
+    gate = 1 / dif  # 收敛条件设定，精度的映射
+    fast_n = 1
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
@@ -93,7 +94,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
         obs_delta = np.apply_along_axis(
-            lambda p: get_ob_influence(obs_n, p, (10 + n // 10) * gate),
+            lambda p: get_ob_influence(obs_n, p, fast_n * gate / obs.shape[0]),
             axis=1,
             arr=network)
         distances = network[winner_idx] - network
@@ -107,7 +108,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         learning_rate = learning_rate * 0.99997
         # 这部分对应了σ=σ0*e^{-t/t0}, sigma0=n//10 t0=3332.83
         n = n * 0.9997
-
+        fast_n = fast_n * 0.997
         # Check for plotting interval
         if not i % 500:  # 1000次画一次图
             plot_network(cities,
@@ -126,7 +127,8 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-        if np.linalg.norm(delta, axis=1).mean() < gate:  # 当迭代变化平均值小于设定的精度时停止
+        if np.linalg.norm(delta,
+                          axis=1).mean() < gate / 100:  # 当迭代变化平均值小于设定的精度时停止
             print("Average movement of neuron has reduced to {},".format(gate),
                   "finishing execution at {} iterations".format(i))
 
