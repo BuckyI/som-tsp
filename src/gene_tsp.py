@@ -12,17 +12,17 @@ def arr_plot(arr, obs):
 
     def get_xy(arr):
         try:
-            x = arr.values[:, 0].tolist()
-            y = arr.values[:, 1].tolist()
+            x = arr["x"].to_list()
+            y = arr["y"].to_list()
         except AttributeError:
             x = arr[:, 0].tolist()
             y = arr[:, 1].tolist()
         return x, y
 
     data = get_xy(arr)
-    plt.scatter(data[1], data[0], color="red", label="city")
+    plt.scatter(data[0], data[1], color="red", label="city")
     data = get_xy(obs)
-    plt.scatter(data[1], data[0], color="black", label="obstacle")
+    plt.scatter(data[0], data[1], color="black", label="obstacle")
     plt.legend()
     plt.show()
 
@@ -39,7 +39,7 @@ def generate_target(x_range=(0, 100), y_range=(0, 100), way=None, info=""):
             x, y = event.x, event.y
             var.set(str(x) + "," + str(y))
             print("\rclick position", x, y, end="")
-            points.append((event.y, event.x))  # 为了适应.tsp文件中的坐标顺序
+            points.append((event.x, event.y))
 
         points = []
 
@@ -77,11 +77,10 @@ def generate_target(x_range=(0, 100), y_range=(0, 100), way=None, info=""):
     if way == "gui":
         # arr = np.array(gui_get_points())
         arr = np.array(p.input_points(x_range, y_range, info))
-        arr[:, [0, 1]] = arr[:, [1, 0]]  # 两列交换位置，为 y,x
     else:
         arr = get_circle()
 
-    return pd.DataFrame(arr)
+    return pd.DataFrame(arr, columns=["x", "y"])
 
 
 def generate_tsp(data, filename="assets/arr.tsp", comment="hello world"):
@@ -95,6 +94,7 @@ def generate_tsp(data, filename="assets/arr.tsp", comment="hello world"):
         "DIMENSION": data.shape[0],  # 行数
     }
 
+    data = data[["y", "x"]]  # 为了适应其他地方的tsp
     with open(filename, "w") as f:
         for key in info:
             f.write(key + " : " + str(info[key]) + "\n")
@@ -146,6 +146,8 @@ def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
         "COMMENT": comment,
         "DIMENSION": data.shape[0],  # 行数
     }
+
+    data = data[["y", "x"]]  # 为了适应其他地方的tsp
 
     with open(filename, "w") as f:
         for key in info:

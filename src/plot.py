@@ -81,15 +81,19 @@ def plot_network(cities, neurons, name='diagram.png', axes=None):
 def plot_process(axes, cities, path):
     """
     cities: [DataFrame] 归一化之后的
-    path: [ndarray] the network or the result route
+    path: [ndarray]/[DataFrame] the network or the result route
     axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
     """
     # city 以点的形式
     axes.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
     # path 以线的形式
+    try:
+        x, y = path["x"], path["y"]
+    except Exception:
+        x, y = path[:, 0], path[:, 1]
     axes.plot(
-        path[:, 0],  # x
-        path[:, 1],  # y
+        x,  # x
+        y,  # y
         'r.',  # red dot (actually it's blue!)
         ls='-',  # line style -
         color='#0063ba',
@@ -113,26 +117,12 @@ def plot_route(cities, route, name='diagram.png', ax=None):
 
         axis.set_aspect('equal', adjustable='datalim')
         plt.axis('off')
-        # 画出城市点
-        axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
-        # old route is pd's index Object, new route is ordered cities
-        route = cities.reindex(route)
-        # 在 DataFrame route 末尾添加一行，赋开头的值，这样路线首尾相连
-        # 为什么画 network 不需要呢？是因为 neurons 太多了看不出来首尾没连~
-        route.loc[route.shape[0]] = route.iloc[0]
-        # 画出路径线
-        axis.plot(route['x'],
-                  route['y'],
-                  color='purple',
-                  linewidth=1,
-                  label="route")
-        axis.legend()
+
+        plot_process(axis, cities, route)
+
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
         plt.ion()
     else:
-        ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
-        route = cities.reindex(route)
-        route.loc[route.shape[0]] = route.iloc[0]
-        ax.plot(route['x'], route['y'], color='purple', linewidth=1)
+        plot_process(axis, cities, route)
         return ax

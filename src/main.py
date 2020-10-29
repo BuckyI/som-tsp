@@ -24,13 +24,16 @@ def main():
 
     # 获得路径结果
     start = time.process_time()
-    route = som(problem, 100000)  # from neuron 0 开始的路径 index
+    route_index = som(problem, 100000)  # from neuron 0 开始的路径 index
     end = time.process_time()
     print('SOM training completed. Running time: %s Seconds' % (end - start))
 
     # 计算以及评估
     start = time.process_time()
-    problem = problem.reindex(route)  # 对原始的城市进行重新排序
+    route = problem.reindex(route_index)
+    route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
+    plot_route(problem, route, 'diagrams/route.png')  # 画出路径图
+    problem = problem.reindex(route_index)  # 对原始的城市进行重新排序
     distance = route_distance(problem)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
     generate_tour(route, length=distance)
@@ -116,7 +119,6 @@ def som(problem, iterations, learning_rate=0.8):
     plot_network(cities, network, name='diagrams/final.png')
 
     route = get_route(cities, network)
-    plot_route(cities, route, 'diagrams/route.png')
     return route
 
 
