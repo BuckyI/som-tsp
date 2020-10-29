@@ -76,6 +76,7 @@ def plot_network(cities, neurons, name='diagram.png', axes=None,
         plt.ion()
     else:
         plot_process(axes, cities, neurons, environment)
+        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)  # 测试用
         return axes
 
 
@@ -130,4 +131,5 @@ def plot_route(cities, route, name='diagram.png', ax=None, **environment):
         plt.ion()
     else:
         plot_process(axis, cities, route, environment)
+        plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)  # 测试用
         return ax

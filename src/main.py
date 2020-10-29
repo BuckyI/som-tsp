@@ -92,12 +92,15 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
         obs_delta = np.apply_along_axis(
-            lambda p: get_ob_influence(obs_n, p, 10 * gate),
+            lambda p: get_ob_influence(obs_n, p, (10 + n // 10) * gate),
             axis=1,
             arr=network)
-        city_delta = city - network
-        delta = obs_delta + city_delta
-        network += gaussian[:, np.newaxis] * learning_rate * delta
+        distances = network[winner_idx] - network
+        sep_delta = -np.exp(-distances**2 / (0.434 *
+                                             (50 * gate)**2)) * distances
+        city_delta = gaussian[:, np.newaxis] * (city - network)
+        delta = obs_delta + city_delta + sep_delta
+        network += learning_rate * delta
         # Decay the variables
         # 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997
