@@ -20,25 +20,31 @@ def input_points(x_range=(0, 100),
     return result
 
 
-def update_figure(axis=None):
+def update_figure(axis=None, clean=False):
     """
     axis: [matplotlib.axes._axes.Axes] The axis to be updated
+    clean: [bool] If True, the old axes will be cleaned
     return: axis
     plz change your figure at elsewhere, and use this to update the screen.
     update a current figure(axis) in interactive mode
     if not given, create one and return it
     """
-    if not axis:
-        fig = plt.figure(figsize=(5, 5), frameon=False)  # 5X5 inch 没有边框 dpi=80
-        axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
-
-        axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
-        axis.axis('off')
-        axis.legend()
     if not plt.isinteractive():  # 打开交互模式
         plt.ion()
+    if not axis:
+        fig = plt.figure()
+        # axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
+        axis = fig.add_subplot(1, 1, 1)
+        axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
+        # axis.axis('off')
 
+    axis.legend()
     axis.figure.canvas.flush_events()
+    if clean:  # 窗口方式运行时，只有flush之后才会更新，因此此时窗口不会被清空
+        axis.cla()
+        axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
+        # axis.axis('off')
+
     return axis
 
 
@@ -54,13 +60,13 @@ def plot_network(cities, neurons, name='diagram.png', ax=None):
     mpl.rcParams['agg.path.chunksize'] = 10000  # 增大数据块大小，略微加快速度，避免渲染失败
 
     if not ax:
+        plt.ioff()
         # settings
         fig = plt.figure(figsize=(5, 5), frameon=False)  # 5X5 inch 没有边框 dpi=80
         axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
 
         axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
         plt.axis('off')  # 关闭坐标轴 建议改成：axis.axis('off')
-        axis.legend()
 
         # city 以点的形式
         axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
@@ -73,11 +79,11 @@ def plot_network(cities, neurons, name='diagram.png', ax=None):
             color='#0063ba',
             label="neuron",
             markersize=2)  # the s of marker is 4
-
+        axis.legend()
         # save 边框  tight 内边距 0
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
-
+        plt.ion()
     else:
         ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         ax.plot(neurons[:, 0],
@@ -95,13 +101,13 @@ def plot_route(cities, route, name='diagram.png', ax=None):
     mpl.rcParams['agg.path.chunksize'] = 10000
 
     if not ax:
+        plt.ioff()
         # settings
         fig = plt.figure(figsize=(5, 5), frameon=False)
         axis = fig.add_axes([0, 0, 1, 1])
 
         axis.set_aspect('equal', adjustable='datalim')
         plt.axis('off')
-        axis.legend()
         # 画出城市点
         axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         # old route is pd's index Object, new route is ordered cities
@@ -115,10 +121,10 @@ def plot_route(cities, route, name='diagram.png', ax=None):
                   color='purple',
                   linewidth=1,
                   label="route")
-
+        axis.legend()
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
-
+        plt.ion()
     else:
         ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
         route = cities.reindex(route)

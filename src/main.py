@@ -5,7 +5,7 @@ import numpy as np
 from io_helper import read_tsp, normalize
 from neuron import generate_network, get_neighborhood, get_route
 from distance import select_closest, route_distance  # , euclidean_distance
-from plot import plot_network, plot_route
+from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
 import time
 
@@ -58,6 +58,7 @@ def som(problem, iterations, learning_rate=0.8):
     n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
 
     # parameters set to observe and evaluate 自己加的
+    axes = update_figure()
     temp = problem[['x', 'y']]
     gate = 0.01 / max(temp.max() - temp.min())  # 收敛条件设定
     # Generate an adequate network of neurons:
@@ -88,8 +89,12 @@ def som(problem, iterations, learning_rate=0.8):
         n = n * 0.9997
 
         # Check for plotting interval
-        if not i % 1000:  # 1000次画一次图
-            plot_network(cities, network, name='diagrams/{:05d}.png'.format(i))
+        if not i % 500:  # 1000次画一次图
+            plot_network(cities,
+                         network,
+                         name='diagrams/{:05d}.png'.format(i),
+                         ax=axes)
+            update_figure(axes, clean=True)
 
         # Check if any parameter has completely decayed.
         if n < 1:
