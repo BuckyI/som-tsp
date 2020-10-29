@@ -111,3 +111,25 @@ def normalize(points):
     norm = points.apply(lambda c: (c - c.min()) / (c.max() - c.min()))
     # p: each series ['x','y'] ; result: xy等比例缩放 max{DeltaX, DeltaY}
     return norm.apply(lambda p: ratio * p, axis=1)
+
+
+def normalization(*dfs):
+    """
+    *dfs: DataFrame list
+    return: ([*fixed_dfs],max_dif)
+    """
+    diff = []
+    offset_x = []
+    offset_y = []
+    for i in dfs:
+        diff.append(max(i.max() - i.min()))
+        offset_x.append(i.min()[0])
+        offset_y.append(i.min()[1])
+
+    dif = max(diff)
+    offset = (min(offset_x), min(offset_y))
+    result = []
+    for i in dfs:
+        temp = (i[['x', 'y']] - offset) / dif
+        result.append(temp)
+    return result, dif

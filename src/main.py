@@ -2,7 +2,7 @@ from sys import argv
 
 import numpy as np
 
-from io_helper import read_tsp, normalize, read_obs
+from io_helper import read_tsp, normalize, read_obs, normalization
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influence
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
@@ -61,8 +61,10 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
     cities[['x', 'y']] = normalize(cities[['x', 'y']])
 
     if obstacle is not None:
-        obs = obstacle.copy()
-        obs[['x', 'y']] = normalize(obs[['x', 'y']])
+        cities = problem.copy()[['x', 'y']]
+        obs = obstacle.copy()[['x', 'y']]
+        norm_ans = normalization(cities, obs)
+        cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
         obs_n = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
@@ -70,8 +72,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
-    temp = problem[['x', 'y']]
-    gate = 0.01 / max(temp.max() - temp.min())  # 收敛条件设定
+    gate = 0.01 / dif  # 收敛条件设定，精度的映射
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
