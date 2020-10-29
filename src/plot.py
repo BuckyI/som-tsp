@@ -38,7 +38,7 @@ def update_figure(axis=None, clean=False):
         axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
         # axis.axis('off')
 
-    axis.legend()
+    # axis.legend()
     axis.figure.canvas.flush_events()
     if clean:  # 窗口方式运行时，只有flush之后才会更新，因此此时窗口不会被清空
         axis.cla()
@@ -48,52 +48,57 @@ def update_figure(axis=None, clean=False):
     return axis
 
 
-def plot_network(cities, neurons, name='diagram.png', ax=None):
+def plot_network(cities, neurons, name='diagram.png', axes=None):
     """
     cities: [DataFrame] 归一化之后的
     neurons: [ndarray] the network
     name: [str] filepath
-    ax: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
+    axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
     
     Plot a graphical representation of the problem
     """
     mpl.rcParams['agg.path.chunksize'] = 10000  # 增大数据块大小，略微加快速度，避免渲染失败
 
-    if not ax:
+    if not axes:
         plt.ioff()
         # settings
         fig = plt.figure(figsize=(5, 5), frameon=False)  # 5X5 inch 没有边框 dpi=80
-        axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
+        axes = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
 
-        axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
+        axes.set_aspect('equal', adjustable='datalim')  # equal: 正方形
         plt.axis('off')  # 关闭坐标轴 建议改成：axis.axis('off')
 
-        # city 以点的形式
-        axis.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
-        # neuron 以线的形式
-        axis.plot(
-            neurons[:, 0],  # x
-            neurons[:, 1],  # y
-            'r.',  # red dot (actually it's blue!)
-            ls='-',  # line style -
-            color='#0063ba',
-            label="neuron",
-            markersize=2)  # the s of marker is 4
-        axis.legend()
+        plot_process(axes, cities, neurons)
         # save 边框  tight 内边距 0
         plt.savefig(name, bbox_inches='tight', pad_inches=0, dpi=200)
         plt.close()
         plt.ion()
     else:
-        ax.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
-        ax.plot(neurons[:, 0],
-                neurons[:, 1],
-                'r.',
-                ls='-',
-                color='#0063ba',
-                label="neuron",
-                markersize=2)
-        return ax
+        plot_process(axes, cities, neurons)
+        return axes
+
+
+def plot_process(axes, cities, path):
+    """
+    cities: [DataFrame] 归一化之后的
+    path: [ndarray] the network or the result route
+    axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
+    """
+    # city 以点的形式
+    axes.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
+    # path 以线的形式
+    axes.plot(
+        path[:, 0],  # x
+        path[:, 1],  # y
+        'r.',  # red dot (actually it's blue!)
+        ls='-',  # line style -
+        color='#0063ba',
+        label="path",
+        linewidth=1,
+        markersize=2)  # the s of marker is 4
+    # 更新标签
+    axes.legend()
+    return axes
 
 
 def plot_route(cities, route, name='diagram.png', ax=None):

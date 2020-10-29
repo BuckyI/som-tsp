@@ -93,7 +93,7 @@ def som(problem, iterations, learning_rate=0.8):
             plot_network(cities,
                          network,
                          name='diagrams/{:05d}.png'.format(i),
-                         ax=axes)
+                         axes=axes)
             update_figure(axes, clean=True)
 
         # Check if any parameter has completely decayed.
