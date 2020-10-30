@@ -60,10 +60,10 @@ def get_route(cities, network):
     return cities.sort_values('winner').index
 
 
-def get_ob_influence(ob, point, sigma=1, k=0.434):
+def get_ob_influence(ob, network, sigma=10, k=0.434):
     """
     k*sigma^2 determines the range of gaussian
     """
-    distances = ob - point
+    distances = ob - network
     influence = -np.exp(-distances**2 / (k * sigma**2)) * distances
-    return influence.sum(axis=0)
+    return influence

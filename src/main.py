@@ -57,7 +57,6 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
     # Obtain the normalized set of cities (w/ coord in [0,1])
     # copy one so the later process won't influence the original data
     cities = problem.copy()
-
     cities[['x', 'y']] = normalize(cities[['x', 'y']])
 
     if obstacle is not None:
@@ -65,7 +64,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         obs = obstacle.copy()[['x', 'y']]
         norm_ans = normalization(cities, obs)
         cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
-        obs_n = obs[['x', 'y']].to_numpy()
+        # obs_n = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
     n = cities.shape[0] * 8 + obs.shape[0] * 5  # 这里是神经元数目，别误解为人口(population)数目
@@ -73,7 +72,6 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
     gate = 1 / dif  # 收敛条件设定，精度的映射
-    fast_n = 1
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
@@ -82,6 +80,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         if not i % 100:
             # "\r"回车，将光标移到本行开头，大概就是覆盖了吧
             print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
+
         # Choose a random city
         # 随机选取某一行 cities.sample(1)
         # [['x', 'y']] 筛出这两列
@@ -90,25 +89,27 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         winner_idx = select_closest(network, city)
         # Generate a filter that applies changes to the winner's gaussian
         gaussian = get_neighborhood(winner_idx, n // 10, network.shape[0])
+        city_delta = gaussian[:, np.newaxis] * (city - network)
+
+        # choose a random obstacle
+        obs_sample = obs.sample(1)[['x', 'y']].values
+        loser_idx = select_closest(network, obs_sample)
+        gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
+        obs_delta = gaussian[:, np.newaxis] * get_ob_influence(
+            obs_sample, network, gate)
         # Update the network's weights (closer to the city)
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
-        obs_delta = np.apply_along_axis(
-            lambda p: get_ob_influence(obs_n, p, fast_n * gate / obs.shape[0]),
-            axis=1,
-            arr=network)
-        distances = network[winner_idx] - network
-        sep_delta = -np.exp(-distances**2 / (0.434 *
-                                             (50 * gate)**2)) * distances
-        city_delta = gaussian[:, np.newaxis] * (city - network)
-        delta = obs_delta + city_delta + sep_delta
+        # distances = network[winner_idx] - network
+        # sep_delta = -np.exp(-distances**2 / (0.434 *
+        #                                      (50 * gate)**2)) * distances
+        delta = city_delta + obs_delta
         network += learning_rate * delta
         # Decay the variables
         # 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997
         # 这部分对应了σ=σ0*e^{-t/t0}, sigma0=n//10 t0=3332.83
         n = n * 0.9997
-        fast_n = fast_n * 0.997
         # Check for plotting interval
         if not i % 500:  # 1000次画一次图
             plot_network(cities,
@@ -127,10 +128,10 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-        if np.linalg.norm(delta,
-                          axis=1).mean() < gate / 100:  # 当迭代变化平均值小于设定的精度时停止
-            print("Average movement of neuron has reduced to {},".format(gate),
-                  "finishing execution at {} iterations".format(i))
+        # if np.linalg.norm(delta,
+        #                   axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
+        #     print("Average movement of neuron has reduced to {},".format(gate),
+        #           "finishing execution at {} iterations".format(i))
 
             break
     else:
