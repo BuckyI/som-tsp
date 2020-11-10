@@ -32,18 +32,18 @@ def update_figure(axis=None, clean=False):
     if not plt.isinteractive():  # 打开交互模式
         plt.ion()
     if not axis:
-        fig = plt.figure()
-        # axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
-        axis = fig.add_subplot(1, 1, 1)
+        fig = plt.figure(figsize=(5, 5), frameon=False)
+        axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
+        # axis = fig.add_subplot(1, 1, 1)
         axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
-        # axis.axis('off')
+        axis.axis('off')
 
     # axis.legend()
     axis.figure.canvas.flush_events()
     if clean:  # 窗口方式运行时，只有flush之后才会更新，因此此时窗口不会被清空
         axis.cla()
         axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
-        # axis.axis('off')
+        axis.axis('off')
 
     return axis
 
