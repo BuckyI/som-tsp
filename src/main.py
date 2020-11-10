@@ -31,25 +31,25 @@ def get_parser():
 def main():
     # 加载 problem
     arg = get_parser()
-    problem = read_tsp(arg.target)  # 读取城市坐标数据
+    target = read_tsp(arg.target)  # 读取城市坐标数据
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
     print("Problem loading completed.")
 
     # 获得路径结果
     start = time.process_time()
-    route_index = som(problem, 100000, 0.8,
+    route_index = som(target, 100000, 0.8,
                       obstacle)  # from neuron 0 开始的路径 index
     end = time.process_time()
     print('SOM training completed. Running time: %s Seconds' % (end - start))
 
     # 计算以及评估
     start = time.process_time()
-    route = problem.reindex(route_index)
+    route = target.reindex(route_index)
     route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
-    plot_route(problem, route, 'diagrams/route.png',
+    plot_route(target, route, 'diagrams/route.png',
                obstacle=obstacle)  # 画出路径图
-    problem = problem.reindex(route_index)  # 对原始的城市进行重新排序
-    distance = route_distance(problem)  # 计算城市按照当前路径的距离
+    target = target.reindex(route_index)  # 对原始的城市进行重新排序
+    distance = route_distance(target)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
     generate_tour(route, length=distance)
     end = time.process_time()
