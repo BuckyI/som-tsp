@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 
-from io_helper import read_tsp, normalize, read_obs, normalization
+from io_helper import read_tsp, normalize, read_obs, normalization, get_gif
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influence
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
@@ -50,17 +50,21 @@ def main():
 
     # 计算以及评估
     start = time.process_time()
+    # 获得路径
     route = target.reindex(route_index)
     route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
     plot_route(target, route, data_path + 'route.png',
                obstacle=obstacle)  # 画出路径图
     target = target.reindex(route_index)  # 对原始的城市进行重新排序
+    # 路径距离
     distance = route_distance(target)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
+    # 生成相关文件
     generate_tour(route,
                   filename=data_path + "tour.tour",
                   length=distance,
                   comment=time_id)
+    get_gif(data_path)
     end = time.process_time()
     print('Evaluation completed. Running time: %s Seconds' % (end - start))
 

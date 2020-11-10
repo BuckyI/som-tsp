@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import imageio
+import os
 
 
 def read_tsp(filename):
@@ -85,6 +87,16 @@ def read_obs(filename):
             nrows=dimension)  # Number of rows of file to read.
 
         return obstacles
+
+
+def get_gif(folder, name="result"):
+    """将folder下的所有.png图片合成为一个gif文件"""
+    gif_images = []
+    img_paths = [folder+i for i in os.listdir(folder) if i.endswith(".png")]
+    for path in img_paths:
+        gif_images.append(imageio.imread(path))
+    gif_name = folder + "/" + name + ".gif"
+    imageio.mimwrite(gif_name, gif_images, fps=1)
 
 
 def normalize(points):
