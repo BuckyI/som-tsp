@@ -8,8 +8,14 @@
             "name": "Python: main",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal"
+            "program": "C:/Users/45489/Documents/GitHub/som-tsp/src/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-t",
+                "assets/arr.tsp",
+                "-o",
+                "assets/obs.obs"
+            ]
         }
     ]
 }

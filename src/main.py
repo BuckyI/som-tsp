@@ -1,5 +1,4 @@
-from sys import argv
-
+import argparse
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization
@@ -10,17 +9,30 @@ from gene_tsp import generate_tour
 import time
 
 
+def get_parser():
+    """
+    从命令行读取参数
+    return argparse.Namespace
+    """
+    parser = argparse.ArgumentParser(description="TSP arguments",
+                                     usage="python src/main.py <filename>.tsp")
+    parser.add_argument('-t',
+                        '--target',
+                        metavar="<filename>.tsp",
+                        required=True,
+                        help="init tsp targets")
+    parser.add_argument('-o',
+                        '--obstacle',
+                        metavar="<filename>.obs",
+                        help="load obstacles")
+    return parser.parse_args()
+
+
 def main():
     # 加载 problem
-    if len(argv) != 2:
-        print("Correct use: python src/main.py <filename>.tsp")
-        if len(argv) == 1:
-            problem = read_tsp("assets/arr.tsp")  # 测试用代码
-            obstacle = read_obs("assets/obs.obs")
-        else:
-            return -1
-    else:
-        problem = read_tsp(argv[1])  # 读取城市坐标数据
+    arg = get_parser()
+    problem = read_tsp(arg.target)  # 读取城市坐标数据
+    obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
     print("Problem loading completed.")
 
     # 获得路径结果
@@ -128,10 +140,10 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-        # if np.linalg.norm(delta,
-        #                   axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
-        #     print("Average movement of neuron has reduced to {},".format(gate),
-        #           "finishing execution at {} iterations".format(i))
+            # if np.linalg.norm(delta,
+            #                   axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
+            #     print("Average movement of neuron has reduced to {},".format(gate),
+            #           "finishing execution at {} iterations".format(i))
 
             break
     else:
