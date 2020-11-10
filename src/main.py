@@ -1,4 +1,5 @@
 import argparse
+import os
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization
@@ -35,10 +36,15 @@ def main():
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
     print("Problem loading completed.")
 
+    # 设定本次数据存储路径
+    time_id = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())  # 标识本次运行
+    data_path = "assets/" + time_id + "/"  # 作为运行数据存储的路径
+    os.mkdir(data_path)  # 建立文件夹
+
     # 获得路径结果
     start = time.process_time()
-    route_index = som(target, 100000, 0.8,
-                      obstacle)  # from neuron 0 开始的路径 index
+    route_index = som(target, 100000, 0.8, obstacle,
+                      data_path)  # from neuron 0 开始的路径 index
     end = time.process_time()
     print('SOM training completed. Running time: %s Seconds' % (end - start))
 
@@ -46,21 +52,31 @@ def main():
     start = time.process_time()
     route = target.reindex(route_index)
     route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
-    plot_route(target, route, 'diagrams/route.png',
+    plot_route(target, route, data_path + 'route.png',
                obstacle=obstacle)  # 画出路径图
     target = target.reindex(route_index)  # 对原始的城市进行重新排序
     distance = route_distance(target)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
-    generate_tour(route, length=distance)
+    generate_tour(route,
+                  filename=data_path + "tour.tour",
+                  length=distance,
+                  comment=time_id)
     end = time.process_time()
     print('Evaluation completed. Running time: %s Seconds' % (end - start))
 
 
-def som(problem, iterations, learning_rate=0.8, obstacle=None):
+def som(target,
+        iterations,
+        learning_rate=0.8,
+        obstacle=None,
+        data_path="assets/"):
     """
-    problem: [DataFrame] ['city', 'y', 'x']
+    target: [DataFrame] ['city', 'y', 'x']
     iterations: [int] the max iteration times
     learning rate: [float] the original learning rate, will decay
+    obstacle: [DataFrame] ['obs' 'y' 'x']
+    data_path: [str] 迭代过程中以文件形式保存的数据的路径
+    
     return: [index] route
 
     Solve the TSP using a Self-Organizing Map.
@@ -68,11 +84,11 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
 
     # Obtain the normalized set of cities (w/ coord in [0,1])
     # copy one so the later process won't influence the original data
-    cities = problem.copy()
+    cities = target.copy()
     cities[['x', 'y']] = normalize(cities[['x', 'y']])
 
     if obstacle is not None:
-        cities = problem.copy()[['x', 'y']]
+        cities = target.copy()[['x', 'y']]
         obs = obstacle.copy()[['x', 'y']]
         norm_ans = normalization(cities, obs)
         cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
@@ -126,7 +142,7 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
         if not i % 500:  # 1000次画一次图
             plot_network(cities,
                          network,
-                         name='diagrams/{:05d}.png'.format(i),
+                         name=data_path + '{:05d}.png'.format(i),
                          axes=axes,
                          obstacle=obs)
             update_figure(axes, clean=True)
@@ -140,16 +156,15 @@ def som(problem, iterations, learning_rate=0.8, obstacle=None):
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-            # if np.linalg.norm(delta,
-            #                   axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
-            #     print("Average movement of neuron has reduced to {},".format(gate),
-            #           "finishing execution at {} iterations".format(i))
-
+        if np.linalg.norm(delta,
+                          axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
+            print("Average movement of neuron has reduced to {},".format(gate),
+                  "finishing execution at {} iterations".format(i))
             break
     else:
         print('Completed {} iterations.'.format(iterations))
 
-    plot_network(cities, network, name='diagrams/final.png', obstacle=obs)
+    plot_network(cities, network, name=data_path + 'final.png', obstacle=obs)
 
     route = get_route(cities, network)
     return route
