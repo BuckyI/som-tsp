@@ -32,7 +32,7 @@ def update_figure(axis=None, clean=False):
     if not plt.isinteractive():  # 打开交互模式
         plt.ion()
     if not axis:
-        fig = plt.figure(figsize=(5, 5), frameon=False)
+        fig = plt.figure(figsize=(4.5, 4.5), frameon=False)
         axis = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
         # axis = fig.add_subplot(1, 1, 1)
         axis.set_aspect('equal', adjustable='datalim')  # equal: 正方形
@@ -63,7 +63,8 @@ def plot_network(cities, neurons, name='diagram.png', axes=None,
     if not axes:
         plt.ioff()
         # settings
-        fig = plt.figure(figsize=(5, 5), frameon=False)  # 5X5 inch 没有边框 dpi=80
+        fig = plt.figure(figsize=(4.5, 4.5),
+                         frameon=False)  # 5X5 inch 没有边框 dpi=80
         axes = fig.add_axes([0, 0, 1, 1])  # axes 与 figure 相同大小，完全覆盖
 
         axes.set_aspect('equal', adjustable='datalim')  # equal: 正方形
@@ -118,7 +119,7 @@ def plot_route(cities, route, name='diagram.png', ax=None, **environment):
     if not ax:
         plt.ioff()
         # settings
-        fig = plt.figure(figsize=(5, 5), frameon=False)
+        fig = plt.figure(figsize=(4.5, 4.5), frameon=False)
         axis = fig.add_axes([0, 0, 1, 1])
 
         axis.set_aspect('equal', adjustable='datalim')

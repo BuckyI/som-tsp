@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 
-from io_helper import read_tsp, normalize, read_obs, normalization, get_gif
+from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influence
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
@@ -41,15 +41,13 @@ def main():
     data_path = "assets/" + time_id + "/"  # 作为运行数据存储的路径
     os.mkdir(data_path)  # 建立文件夹
 
+    start_time = time.process_time()
     # 获得路径结果
-    start = time.process_time()
     route_index = som(target, 100000, 0.8, obstacle,
                       data_path)  # from neuron 0 开始的路径 index
-    end = time.process_time()
-    print('SOM training completed. Running time: %s Seconds' % (end - start))
-
+    run_time = time.process_time() - start_time
+    print('SOM training completed. Running time: %s Seconds' % (run_time))
     # 计算以及评估
-    start = time.process_time()
     # 获得路径
     route = target.reindex(route_index)
     route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
@@ -60,13 +58,18 @@ def main():
     distance = route_distance(target)  # 计算城市按照当前路径的距离
     print('Route found of length {}'.format(distance))
     # 生成相关文件
-    generate_tour(route,
+    generate_tour(route_index,
                   filename=data_path + "tour.tour",
                   length=distance,
                   comment=time_id)
     get_gif(data_path)
-    end = time.process_time()
-    print('Evaluation completed. Running time: %s Seconds' % (end - start))
+    save_info(
+        data_path,
+        target=arg.target,
+        obstacle=arg.obstacle,
+        run_time=run_time,
+        distance=distance,
+    )
 
 
 def som(target,

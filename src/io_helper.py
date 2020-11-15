@@ -92,11 +92,20 @@ def read_obs(filename):
 def get_gif(folder, name="result"):
     """将folder下的所有.png图片合成为一个gif文件"""
     gif_images = []
-    img_paths = [folder+i for i in os.listdir(folder) if i.endswith(".png")]
+    img_paths = [folder + i for i in os.listdir(folder) if i.endswith(".png")]
     for path in img_paths:
         gif_images.append(imageio.imread(path))
     gif_name = folder + "/" + name + ".gif"
     imageio.mimwrite(gif_name, gif_images, fps=1)
+
+
+def save_info(path, **info):
+    with open(path + "README.md", "w") as f:
+        f.write("# README\n\n")
+        for i in info:
+            f.write("## {}\n\n".format(str(i)))
+            f.write(str(info[i])+"\n\n")
+
 
 
 def normalize(points):

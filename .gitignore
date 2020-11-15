@@ -203,3 +203,4 @@ venv.bak/
 *.ipynb
 *.gif
 *.tour
+assets/*
