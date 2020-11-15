@@ -34,6 +34,7 @@ def main():
     arg = get_parser()
     target = read_tsp(arg.target)  # 读取城市坐标数据
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
+    obstacle = None
     print("Problem loading completed.")
 
     # 设定本次数据存储路径
@@ -93,18 +94,16 @@ def som(target,
 
     # Obtain the normalized set of cities (w/ coord in [0,1])
     # copy one so the later process won't influence the original data
-    cities = target.copy()
-    cities[['x', 'y']] = normalize(cities[['x', 'y']])
+    cities = target.copy()[['x', 'y']]
+    obs = obstacle.copy()[['x', 'y']] if obstacle is not None else None
 
-    if obstacle is not None:
-        cities = target.copy()[['x', 'y']]
-        obs = obstacle.copy()[['x', 'y']]
-        norm_ans = normalization(cities, obs)
-        cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
-        # obs_n = obs[['x', 'y']].to_numpy()
+    norm_ans = normalization(cities, obs)
+    cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
+    # obs_n = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
-    n = cities.shape[0] * 8 + obs.shape[0] * 5  # 这里是神经元数目，别误解为人口(population)数目
+    n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
+    n = n + obs.shape[0] * 5 if obstacle is not None else n
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
@@ -129,11 +128,14 @@ def som(target,
         city_delta = gaussian[:, np.newaxis] * (city - network)
 
         # choose a random obstacle
-        obs_sample = obs.sample(1)[['x', 'y']].values
-        loser_idx = select_closest(network, obs_sample)
-        gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
-        obs_delta = gaussian[:, np.newaxis] * get_ob_influence(
-            obs_sample, network, gate)
+        if obs is None:
+            obs_delta = 0
+        else:
+            obs_sample = obs.sample(1)[['x', 'y']].values
+            loser_idx = select_closest(network, obs_sample)
+            gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
+            obs_delta = gaussian[:, np.newaxis] * get_ob_influence(
+                obs_sample, network, gate)
         # Update the network's weights (closer to the city)
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理

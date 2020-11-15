@@ -140,11 +140,14 @@ def normalization(*dfs):
     """
     *dfs: DataFrame list
     return: ([*fixed_dfs],max_dif)
+    max_dif: 所有坐标中最大的跨度,根据这个对整体缩小
     """
     diff = []
     offset_x = []
     offset_y = []
     for i in dfs:
+        if i is None:
+            continue
         diff.append(max(i.max() - i.min()))
         offset_x.append(i.min()[0])
         offset_y.append(i.min()[1])
@@ -153,6 +156,9 @@ def normalization(*dfs):
     offset = (min(offset_x), min(offset_y))
     result = []
     for i in dfs:
+        if i is None:
+            result.append(None)
+            continue
         temp = (i[['x', 'y']] - offset) / dif
         result.append(temp)
     return result, dif
