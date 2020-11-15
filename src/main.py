@@ -42,21 +42,23 @@ def main():
     os.mkdir(data_path)  # 建立文件夹
 
     start_time = time.process_time()
+
     # 获得路径结果
     route_index = som(target, 100000, 0.8, obstacle,
                       data_path)  # from neuron 0 开始的路径 index
+    # 获得路径
+    routed_target = target.reindex(route_index)
+    distance = route_distance(routed_target)  # 计算城市按照当前路径的距离
+    print('Route found of length {}'.format(distance))
+    routed_target.loc[routed_target.shape[0]] = routed_target.iloc[0]  # 首尾相连
+    plot_route(target,
+               routed_target,
+               data_path + 'route.png',
+               obstacle=obstacle)
+
     run_time = time.process_time() - start_time
     print('SOM training completed. Running time: %s Seconds' % (run_time))
-    # 计算以及评估
-    # 获得路径
-    route = target.reindex(route_index)
-    route.loc[route.shape[0]] = route.iloc[0]  # 末尾添加开头，首尾相连
-    plot_route(target, route, data_path + 'route.png',
-               obstacle=obstacle)  # 画出路径图
-    target = target.reindex(route_index)  # 对原始的城市进行重新排序
-    # 路径距离
-    distance = route_distance(target)  # 计算城市按照当前路径的距离
-    print('Route found of length {}'.format(distance))
+
     # 生成相关文件
     generate_tour(route_index,
                   filename=data_path + "tour.tour",

@@ -22,11 +22,15 @@ def euclidean_distance(a, b):
     return np.linalg.norm(a - b, axis=1)
 
 
-def route_distance(cities):
+def route_distance(cities, index=None):
     """
     cities: [DataFrame] 排好顺序的城市\n
+    index: [index] 如果给了这个参数,就根据index排序之后再计算距离
     Return the cost of traversing a route of cities in a certain order.\n
     """
+    if index is not None:
+        cities = cities.reindex(index)
+        
     points = cities[['x', 'y']]
     distances = euclidean_distance(points, np.roll(points, 1, axis=0))
     # 按行移1位后比较距离，也就是相邻 city 的距离了
