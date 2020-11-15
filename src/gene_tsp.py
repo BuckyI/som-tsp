@@ -7,7 +7,7 @@ import tkinter as tk
 import plot as p
 
 
-def arr_plot(arr, obs):
+def arr_plot(arr, obs, savepath=None):
     "for testing useful for Dataframe and ndarray"
 
     def get_xy(arr):
@@ -24,6 +24,11 @@ def arr_plot(arr, obs):
     data = get_xy(obs)
     plt.scatter(data[0], data[1], color="black", label="obstacle")
     plt.legend()
+    if savepath is not None:
+        plt.savefig(savepath + "problem.png",
+                    bbox_inches='tight',
+                    pad_inches=0,
+                    dpi=200)
     plt.show()
 
 
@@ -202,7 +207,10 @@ def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
 
 
 if __name__ == "__main__":
+    time_id = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())
+    path = "assets/" + "problem " + time_id + "/"
+    os.mkdir(path)
     arr, obs = generate()
-    arr_plot(arr, obs)
-    generate_tsp(arr)
-    generate_obs(obs)
+    arr_plot(arr, obs, path)
+    generate_tsp(arr, path + "arr.tsp")
+    generate_obs(obs, path + "obs.obs")
