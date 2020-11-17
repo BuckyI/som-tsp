@@ -34,7 +34,6 @@ def main():
     arg = get_parser()
     target = read_tsp(arg.target)  # 读取城市坐标数据
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
-    obstacle = None
     print("Problem loading completed.")
 
     # 设定本次数据存储路径
@@ -135,7 +134,7 @@ def som(target,
             loser_idx = select_closest(network, obs_sample)
             gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
             obs_delta = gaussian[:, np.newaxis] * get_ob_influence(
-                obs_sample, network, gate)
+                obs_sample, network, sigma=gate, k=2)
         # Update the network's weights (closer to the city)
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
