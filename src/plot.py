@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from neuron import get_route_vector
 
 
 def input_points(x_range=(0, 100),
@@ -90,20 +91,30 @@ def plot_process(axes, cities, path, environment={}):
     """
     # city 以点的形式
     axes.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
-    # path 以线的形式
-    try:
-        x, y = path["x"], path["y"]
-    except Exception:
-        x, y = path[:, 0], path[:, 1]
-    axes.plot(
-        x,  # x
-        y,  # y
-        'r.',  # red dot (actually it's blue!)
-        ls='-',  # line style -
-        color='#0063ba',
-        label="path",
-        linewidth=1,
-        markersize=2)  # the s of marker is 4
+    # path 以有向线段的形式
+    if type(path).__name__ == 'DataFrame':
+        path = path[['x', 'y']].to_numpy()
+    # axes.plot(
+    #     x,  # x
+    #     y,  # y
+    #     'r.',  # red dot (actually it's blue!)
+    #     ls='-',  # line style -
+    #     color='#0063ba',
+    #     label="path",
+    #     linewidth=1,
+    #     markersize=2)  # the s of marker is 4
+    vec = get_route_vector(path)
+    axes.quiver(
+        path[:, 0],  # X
+        path[:, 1],  # Y
+        vec[:, 0],  # U
+        vec[:, 1],  # V
+        angles='xy',
+        scale_units='xy',
+        scale=1,  # 长短
+        units='xy',
+        width=0.003,  # 粗细
+        pivot='tail')
     if environment.get("obstacle", None) is not None:
         obs = environment["obstacle"]
         axes.scatter(obs['x'], obs['y'], color='y', s=4, label="obstacle")

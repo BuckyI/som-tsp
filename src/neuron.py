@@ -67,3 +67,19 @@ def get_ob_influence(ob, network, sigma=10, k=2):
     distances = ob - network
     influence = -np.exp(-distances**2 / (k * sigma**2)) * distances
     return influence
+
+
+def get_route_vector(network, d=0):
+    """
+    network: [ndarray] 坐标点矩阵
+    d: direction 0顺时针 1逆时针
+    return vector [ndarray]
+    根据坐标点矩阵获得依次相连的线段/向量矩阵
+    vector[i,:]是从network[i,:]出发的位移向量
+    """
+    if d == 0:
+        vector = np.roll(network - np.roll(network, 1, axis=0), -1,
+                         axis=0)  # 顺时针
+    else:
+        vector = np.roll(network, 1, axis=0) - network  # 逆时针
+    return vector
