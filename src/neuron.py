@@ -79,7 +79,7 @@ def ver_influence(vector, influence):
     x1, y1 = influence[:, 0], influence[:, 1]
     x = y0**2 * x1 - x0 * y0 * y1
     y = x0**2 * y1 - x0 * y0 * x1
-    return np.array([x, y]).T / (x0**2 + y0**2)
+    return np.array([x, y]).T / (x0**2 + y0**2)[:, np.newaxis]
 
 
 def get_route_vector(network, d=0):

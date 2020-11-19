@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influence
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influence, get_route_vector, ver_influence
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -133,8 +133,10 @@ def som(target,
             obs_sample = obs.sample(1)[['x', 'y']].values
             loser_idx = select_closest(network, obs_sample)
             gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
-            obs_delta = gaussian[:, np.newaxis] * get_ob_influence(
-                obs_sample, network, sigma=gate, k=2)
+            obs_influence = ver_influence(
+                get_route_vector(network),
+                get_ob_influence(obs_sample, network, sigma=gate, k=2))
+            obs_delta = gaussian[:, np.newaxis] * obs_influence
         # Update the network's weights (closer to the city)
         # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
         # 具体应该是broadcast相关原理
