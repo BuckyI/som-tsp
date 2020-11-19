@@ -69,6 +69,19 @@ def get_ob_influence(ob, network, sigma=10, k=2):
     return influence
 
 
+def ver_influence(vector, influence):
+    """
+    vector: 方向向量
+    influence: 影响
+    return: influence 垂直于 vector 的影响
+    """
+    x0, y0 = vector[:, 0], vector[:, 1]
+    x1, y1 = influence[:, 0], influence[:, 1]
+    x = y0**2 * x1 - x0 * y0 * y1
+    y = x0**2 * y1 - x0 * y0 * x1
+    return np.array([x, y]).T / (x0**2 + y0**2)
+
+
 def get_route_vector(network, d=0):
     """
     network: [ndarray] 坐标点矩阵
