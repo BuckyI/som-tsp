@@ -28,10 +28,12 @@ def route_distance(cities, index=None):
     index: [index] 如果给了这个参数,就根据index排序之后再计算距离
     Return the cost of traversing a route of cities in a certain order.\n
     """
-    if index is not None:
-        cities = cities.reindex(index)
-        
-    points = cities[['x', 'y']]
+    if type(cities).__name__ == 'DataFrame':
+        if index is not None:  # 如果提供了顺序,就排序后再处理
+            cities = cities.reindex(index)
+        points = cities[['x', 'y']]
+    else:
+        points = cities  # 如果为ndarray,直接求距离就可以了
     distances = euclidean_distance(points, np.roll(points, 1, axis=0))
     # 按行移1位后比较距离，也就是相邻 city 的距离了
     return np.sum(distances)

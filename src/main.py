@@ -44,26 +44,17 @@ def main():
     start_time = time.process_time()
 
     # 获得路径结果
-    route_index = som(target, 100000, 0.8, obstacle,
-                      data_path)  # from neuron 0 开始的路径 index
-    # 获得路径
-    routed_target = target.reindex(route_index)
-    distance = route_distance(routed_target)  # 计算城市按照当前路径的距离
-    print('Route found of length {}'.format(distance))
-    routed_target.loc[routed_target.shape[0]] = routed_target.iloc[0]  # 首尾相连
-    plot_route(target,
-               routed_target,
-               data_path + 'route.png',
-               obstacle=obstacle)
+    distance = som(target, 100000, 0.8, obstacle,
+                   data_path)  # from neuron 0 开始的路径 index
 
     run_time = time.process_time() - start_time
     print('SOM training completed. Running time: %s Seconds' % (run_time))
 
     # 生成相关文件
-    generate_tour(route_index,
-                  filename=data_path + "tour.tour",
-                  length=distance,
-                  comment=time_id)
+    # generate_tour(route_index,
+    #               filename=data_path + "tour.tour",
+    #               length=distance,
+    #               comment=time_id)
     get_gif(data_path)
     save_info(
         data_path,
@@ -151,7 +142,7 @@ def som(target,
         # 这部分对应了σ=σ0*e^{-t/t0}, sigma0=n//10 t0=3332.83
         n = n * 0.9997
         # Check for plotting interval
-        if not i % 500:  # 1000次画一次图
+        if not i % 200:  # 1000次画一次图
             plot_network(cities,
                          network,
                          name=data_path + '{:05d}.png'.format(i),
@@ -178,8 +169,10 @@ def som(target,
 
     plot_network(cities, network, name=data_path + 'final.png', obstacle=obs)
 
-    route = get_route(cities, network)
-    return route
+    distance = route_distance(network) * dif  # 恢复到原坐标系下的距离
+    print('Route found of length {}'.format(distance))
+
+    return distance
 
 
 if __name__ == '__main__':
