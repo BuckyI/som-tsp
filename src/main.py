@@ -134,7 +134,7 @@ def som(target,
             loser_idx = select_closest(network, obs_sample)
             gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
             obs_influence = ver_influence(
-                get_route_vector(network),
+                get_route_vector(network, t=1),
                 get_ob_influence(obs_sample, network, sigma=gate, k=2))
             obs_delta = gaussian[:, np.newaxis] * obs_influence
         # Update the network's weights (closer to the city)

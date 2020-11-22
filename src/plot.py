@@ -103,7 +103,7 @@ def plot_process(axes, cities, path, environment={}):
     #     label="path",
     #     linewidth=1,
     #     markersize=2)  # the s of marker is 4
-    vec = get_route_vector(path)
+    vec = get_route_vector(path, d=0, t=0)
     axes.quiver(
         path[:, 0],  # X
         path[:, 1],  # Y

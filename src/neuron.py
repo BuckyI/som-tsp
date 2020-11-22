@@ -82,17 +82,21 @@ def ver_influence(vector, influence):
     return np.array([x, y]).T / (x0**2 + y0**2)[:, np.newaxis]
 
 
-def get_route_vector(network, d=0):
+def get_route_vector(network, d=0, t=0):
     """
     network: [ndarray] 坐标点矩阵
     d: direction 0顺时针 1逆时针
+    t==0: vector[i,:]是从network[i,:]出发的位移向量
+    t==1: vector[i,:]是到达network[i,:]的位移向量
     return vector [ndarray]
     根据坐标点矩阵获得依次相连的线段/向量矩阵
-    vector[i,:]是从network[i,:]出发的位移向量
     """
-    if d == 0:
-        vector = np.roll(network - np.roll(network, 1, axis=0), -1,
-                         axis=0)  # 顺时针
-    else:
-        vector = np.roll(network, 1, axis=0) - network  # 逆时针
+    if d == 0:  # 顺时针
+        vector = network - np.roll(network, 1, axis=0)
+        if t == 0:
+            vector = np.roll(vector, -1, axis=0)
+    elif d == 1:  # 逆时针
+        vector = np.roll(network, 1, axis=0) - network
+        if t == 1:
+            vector = np.roll(vector, -1, axis=0)
     return vector
