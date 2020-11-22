@@ -60,12 +60,18 @@ def get_route(cities, network):
     return cities.sort_values('winner').index
 
 
-def get_ob_influence(ob, network, sigma=10, k=2):
+def get_ob_influence(ob, network, sigma=10):
     """
     k*sigma^2 determines the range of gaussian
+    sigma: 可以看做一个邻域范围
+    sense: 精度范围,如果距离小于sense就视为没有影响.
     """
-    distances = ob - network
-    influence = -np.exp(-distances**2 / (k * sigma**2)) * distances
+    difference = ob - network
+    influence = -difference  # 影响简化
+    distances = np.linalg.norm(difference, axis=1)
+    influence[distances > sigma] = 0  # 超出sigma范围以外的置零不处理
+    # influence = -np.exp(-distances**2 /
+    #                     (k * sigma**2))[:, np.newaxis] * (ob - network)
     return influence
 
 
