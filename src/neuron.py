@@ -68,10 +68,11 @@ def get_ob_influence(ob, network, sigma=10):
     """
     difference = ob - network
     distances = np.linalg.norm(difference, axis=1)
-    difference[distances > sigma] = 0  # 超出sigma范围以外的置零不处理
-    influence = -difference / distances[:, np.newaxis] * sigma  # 影响简化
-    # influence = -np.exp(-distances**2 /
-    #                     (k * sigma**2))[:, np.newaxis] * (ob - network)
+    distances[distances > sigma] = np.inf  # 超出sigma范围以外的设为无穷大不处理
+    # influence = -difference / distances[:, np.newaxis] * sigma  # 影响简化
+    influence = -np.exp(
+        -distances**2 / (2 * sigma**2)
+    )[:, np.newaxis] * difference / distances[:, np.newaxis] * sigma
     return influence
 
 
