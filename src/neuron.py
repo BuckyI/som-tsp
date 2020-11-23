@@ -67,9 +67,9 @@ def get_ob_influence(ob, network, sigma=10):
     sense: 精度范围,如果距离小于sense就视为没有影响.
     """
     difference = ob - network
-    influence = -difference  # 影响简化
     distances = np.linalg.norm(difference, axis=1)
-    influence[distances > sigma] = 0  # 超出sigma范围以外的置零不处理
+    difference[distances > sigma] = 0  # 超出sigma范围以外的置零不处理
+    influence = -difference / distances[:, np.newaxis] * sigma  # 影响简化
     # influence = -np.exp(-distances**2 /
     #                     (k * sigma**2))[:, np.newaxis] * (ob - network)
     return influence
