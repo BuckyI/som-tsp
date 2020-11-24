@@ -108,12 +108,9 @@ def som(target,
             print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
 
         # Choose a random city
-        # 随机选取某一行 cities.sample(1)
-        # [['x', 'y']] 筛出这两列
         # DataFrame.values --> numpy.ndarray
         city = cities.sample(1)[['x', 'y']].values
         winner_idx = select_closest(network, city)
-        # Generate a filter that applies changes to the winner's gaussian
         gaussian = get_neighborhood(winner_idx, n // 10, network.shape[0])
         city_delta = gaussian[:, np.newaxis] * (city - network)
 
@@ -128,21 +125,18 @@ def som(target,
                 get_route_vector(network, t=1),
                 get_ob_influence(obs_sample, network, sigma=4 * gate))
             obs_delta = gaussian[:, np.newaxis] * obs_influence
+
         # Update the network's weights (closer to the city)
-        # newaxis is the alias(别名) for None 为了调整array的结构，否则无法参与运算
-        # 具体应该是broadcast相关原理
-        # distances = network[winner_idx] - network
-        # sep_delta = -np.exp(-distances**2 / (0.434 *
-        #                                      (50 * gate)**2)) * distances
         delta = city_delta + obs_delta
         network += learning_rate * delta
         # Decay the variables
-        # 对应了 e^{-t/t0} t0=33332.83
+        # 学习率更新 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997
-        # 这部分对应了σ=σ0*e^{-t/t0}, sigma0=n//10 t0=3332.83
+        # 高斯函数邻域更新 对应了σ=σ0*e^{-t/t0}, σ0=n//10 t0=3332.83
         n = n * 0.9997
+
         # Check for plotting interval
-        if not i % 200:  # 1000次画一次图
+        if not i % 200:
             plot_network(cities,
                          network,
                          name=data_path + '{:05d}.png'.format(i),
@@ -150,7 +144,7 @@ def som(target,
                          obstacle=obs)
             update_figure(axes, clean=True)
 
-        # Check if any parameter has completely decayed.
+        # Check if any parameter has completely decayed. 收敛判断
         if n < 1:
             print('Radius has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
@@ -167,8 +161,11 @@ def som(target,
     else:
         print('Completed {} iterations.'.format(iterations))
 
+    # 训练完成后进行的工作
+    # 保存路径图片
     plot_network(cities, network, name=data_path + 'final.png', obstacle=obs)
 
+    # 计算路径距离
     distance = route_distance(network) * dif  # 恢复到原坐标系下的距离
     print('Route found of length {}'.format(distance))
 
