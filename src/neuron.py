@@ -83,15 +83,15 @@ def get_ob_influence(ob, network, sigma=10):
     return influence
 
 
-def ver_influence(vector, influence):
+def ver_vec(direction, vector):
     """
     向量垂直分解
-    vector: 方向向量
-    influence: 影响
-    return: influence 垂直于 vector 的影响
+    direction: [ndarray] 方向向量
+    vector: [ndarray] 要分解的向量
+    return: vector 垂直于 direction 的分向量.
     """
-    x0, y0 = vector[:, 0], vector[:, 1]
-    x1, y1 = influence[:, 0], influence[:, 1]
+    x0, y0 = direction[:, 0], direction[:, 1]
+    x1, y1 = vector[:, 0], vector[:, 1]
     x = y0**2 * x1 - x0 * y0 * y1
     y = x0**2 * y1 - x0 * y0 * x1
     return np.array([x, y]).T / (x0**2 + y0**2)[:, np.newaxis]
