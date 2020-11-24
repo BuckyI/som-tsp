@@ -114,7 +114,8 @@ def plot_process(axes, cities, path, environment={}):
         scale=1,  # 长短
         units='xy',
         width=0.003,  # 粗细
-        pivot='tail')
+        pivot='tail',
+        color="#6495ED")
     if environment.get("obstacle", None) is not None:
         obs = environment["obstacle"]
         axes.scatter(obs['x'], obs['y'], color='y', s=4, label="obstacle")

@@ -66,18 +66,26 @@ def get_ob_influence(ob, network, sigma=10):
     sigma: 可以看做一个邻域范围
     sense: 精度范围,如果距离小于sense就视为没有影响.
     """
-    difference = ob - network
+    difference = network - ob
     distances = np.linalg.norm(difference, axis=1)
+    # 沿方向向量移动的距离,为负时置零
+    fix_dist = (sigma - distances).clip(0)
+    # 获得单位方向向量
     distances[distances > sigma] = np.inf  # 超出sigma范围以外的设为无穷大不处理
-    # influence = -difference / distances[:, np.newaxis] * sigma  # 影响简化
-    influence = -np.exp(
-        -distances**2 / (2 * sigma**2)
-    )[:, np.newaxis] * difference / distances[:, np.newaxis] * sigma
+    vec = difference / distances[:, np.newaxis]
+    # 计算影响
+    influence = vec * fix_dist[:, np.newaxis]  # 影响简化
+
+    # 不使用高斯函数了
+    # influence = -np.exp(
+    #     -distances**2 / (2 * sigma**2)
+    # )[:, np.newaxis] * difference / distances[:, np.newaxis] * sigma
     return influence
 
 
 def ver_influence(vector, influence):
     """
+    向量垂直分解
     vector: 方向向量
     influence: 影响
     return: influence 垂直于 vector 的影响
