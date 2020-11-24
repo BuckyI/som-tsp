@@ -88,7 +88,7 @@ def som(target,
     obs = obstacle.copy()[['x', 'y']] if obstacle is not None else None
 
     norm_ans = normalization(cities, obs)
-    cities, obs, dif = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
+    cities, obs, diff = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
     # obs_n = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
@@ -97,7 +97,7 @@ def som(target,
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
-    gate = 1 / dif  # 收敛条件设定，精度的映射
+    gate = 1 / diff  # 收敛条件设定，精度的映射
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
@@ -153,10 +153,14 @@ def som(target,
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-        if np.linalg.norm(delta,
-                          axis=1).mean() < gate / 1000:  # 当迭代变化平均值小于设定的精度时停止
-            print("Average movement of neuron has reduced to {},".format(gate),
-                  "finishing execution at {} iterations".format(i))
+        delta = np.linalg.norm(delta, axis=1)  # 计算变化的模长 (n,1) array
+        if delta.max() < gate:
+            # 当迭代变化最大值还小于设定的精度时就停止
+            print(
+                "Average movement has reduced to {},".format(delta.mean() *
+                                                             diff),
+                "max movement {},".format(delta.max() * diff),
+                "finishing execution at {} iterations".format(i))
             break
     else:
         print('Completed {} iterations.'.format(iterations))
@@ -166,7 +170,7 @@ def som(target,
     plot_network(cities, network, name=data_path + 'final.png', obstacle=obs)
 
     # 计算路径距离
-    distance = route_distance(network) * dif  # 恢复到原坐标系下的距离
+    distance = route_distance(network) * diff  # 恢复到原坐标系下的距离
     print('Route found of length {}'.format(distance))
 
     return distance
