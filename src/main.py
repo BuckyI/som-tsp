@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influence, get_route_vector, ver_vec
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influence, get_route_vector, ver_vec, sepaprate_node
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -107,6 +107,8 @@ def som(target,
             # "\r"回车，将光标移到本行开头，大概就是覆盖了吧
             print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
 
+        route_dir_vec = get_route_vector(network, d=0, t=1)  # 当前路径下的顺时针,出发方向向量
+
         # Choose a random city
         # DataFrame.values --> numpy.ndarray
         city = cities.sample(1)[['x', 'y']].values
@@ -122,13 +124,17 @@ def som(target,
             loser_idx = select_closest(network, obs_sample)
             gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
             obs_influence = ver_vec(
-                get_route_vector(network, t=1),
+                np.roll(route_dir_vec, 1, axis=0),
                 get_ob_influence(obs_sample, network, sigma=4 * gate))
             obs_delta = gaussian[:, np.newaxis] * obs_influence
 
         # Update the network's weights (closer to the city)
         delta = city_delta + obs_delta
         network += learning_rate * delta
+
+        # 修正结点分布,使之间隔更加均匀
+        network = sepaprate_node(network)
+
         # Decay the variables
         # 学习率更新 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997

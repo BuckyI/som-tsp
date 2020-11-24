@@ -89,6 +89,7 @@ def ver_vec(direction, vector):
     direction: [ndarray] 方向向量
     vector: [ndarray] 要分解的向量
     return: vector 垂直于 direction 的分向量.
+    两个array相同行,对应行求垂直向量.
     """
     x0, y0 = direction[:, 0], direction[:, 1]
     x1, y1 = vector[:, 0], vector[:, 1]
@@ -115,3 +116,17 @@ def get_route_vector(network, d=0, t=0):
         if t == 1:
             vector = np.roll(vector, -1, axis=0)
     return vector
+
+
+def sepaprate_node(network):
+    """
+    return a seperated network with (more) even interval
+    按顺时针方向进行操作
+    """
+    # 为了便于理解,使用字母 abc 表示
+    # ab = get_route_vector(network, 0, 0)
+    ab = np.roll(network, -1, axis=0) - network
+    ac = np.roll(network, -2, axis=0) - network
+    ab_new = ver_vec(ac, ab) + 0.5 * ac
+    delta = ab_new - ab  # 施加于b的更新向量
+    return network + np.roll(delta, 1, axis=0)
