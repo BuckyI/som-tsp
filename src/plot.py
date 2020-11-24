@@ -89,8 +89,11 @@ def plot_process(axes, cities, path, environment={}):
     axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
     environment: [dict] of DataFrame/ndarray
     """
+    span = environment.get("span", None)
+    # 画一条线标识最小精度
+    axes.plot([0, 0], [0, 1 / span], linewidth=4, label="accuracy")
     # city 以点的形式
-    axes.scatter(cities['x'], cities['y'], color='red', s=4, label="city")
+    axes.scatter(cities['x'], cities['y'], color='red', s=4, label="target")
     # path 以有向线段的形式
     if type(path).__name__ == 'DataFrame':
         path = path[['x', 'y']].to_numpy()
@@ -116,9 +119,25 @@ def plot_process(axes, cities, path, environment={}):
         width=0.003,  # 粗细
         pivot='tail',
         color="#6495ED")
-    if environment.get("obstacle", None) is not None:
-        obs = environment["obstacle"]
-        axes.scatter(obs['x'], obs['y'], color='y', s=4, label="obstacle")
+
+    obs = environment.get("obstacle", None)
+    obs_size = environment.get("obs_size", None)
+    if obs is not None:
+        if type(obs).__name__ == 'DataFrame':
+            obs = obs[['x', 'y']].to_numpy()
+        for i in obs:
+            circle = plt.Circle(i,
+                                obs_size,
+                                color='#FFFACD',
+                                fill=True,
+                                alpha=0.5)
+            axes.add_artist(circle)
+        axes.scatter(obs[:, 0],
+                     obs[:, 1],
+                     color='#FFD700',
+                     s=4,
+                     label="obstacle")
+
     # 更新标签
     axes.legend()
     return axes

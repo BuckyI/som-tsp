@@ -102,7 +102,7 @@ def get_gif(folder, name="result"):
 def save_info(path, **info):
     with open(path + "README.md", "w") as f:
         f.write("# README\n\n")
-        f.write("[path](./tour.tour)\n\n")
+        # f.write("[path](./tour.tour)\n\n")
         f.write("![final](./final.png)\n\n")
         f.write("![result](./result.gif)\n\n")
         for i in info:

@@ -88,7 +88,7 @@ def som(target,
     obs = obstacle.copy()[['x', 'y']] if obstacle is not None else None
 
     norm_ans = normalization(cities, obs)
-    cities, obs, diff = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
+    cities, obs, span = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
     # obs_n = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
@@ -97,7 +97,8 @@ def som(target,
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
-    gate = 1 / diff  # 收敛条件设定，精度的映射
+    gate = 1 / span  # 收敛条件设定，精度的映射
+    obs_size = 4 * gate
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
     print('Network of {} neurons created. Starting the iterations:'.format(n))
@@ -125,7 +126,7 @@ def som(target,
             gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
             obs_influence = ver_vec(
                 np.roll(route_dir_vec, 1, axis=0),
-                get_ob_influence(obs_sample, network, sigma=4 * gate))
+                get_ob_influence(obs_sample, network, sigma=obs_size))
             obs_delta = gaussian[:, np.newaxis] * obs_influence
 
         # Update the network's weights (closer to the city)
@@ -143,11 +144,15 @@ def som(target,
 
         # Check for plotting interval
         if not i % 200:
-            plot_network(cities,
-                         network,
-                         name=data_path + '{:05d}.png'.format(i),
-                         axes=axes,
-                         obstacle=obs)
+            plot_network(
+                cities,
+                network,
+                name=data_path + '{:05d}.png'.format(i),
+                axes=axes,
+                obstacle=obs,
+                obs_size=obs_size,
+                span=span,
+            )
             update_figure(axes, clean=True)
 
         # Check if any parameter has completely decayed. 收敛判断
@@ -164,8 +169,8 @@ def som(target,
             # 当迭代变化最大值还小于设定的精度时就停止
             print(
                 "Average movement has reduced to {},".format(delta.mean() *
-                                                             diff),
-                "max movement {},".format(delta.max() * diff),
+                                                             span),
+                "max movement {},".format(delta.max() * span),
                 "finishing execution at {} iterations".format(i))
             break
     else:
@@ -173,10 +178,17 @@ def som(target,
 
     # 训练完成后进行的工作
     # 保存路径图片
-    plot_network(cities, network, name=data_path + 'final.png', obstacle=obs)
+    plot_network(
+        cities,
+        network,
+        name=data_path + 'final.png',
+        obstacle=obs,
+        obs_size=obs_size,
+        span=span,
+    )
 
     # 计算路径距离
-    distance = route_distance(network) * diff  # 恢复到原坐标系下的距离
+    distance = route_distance(network) * span  # 恢复到原坐标系下的距离
     print('Route found of length {}'.format(distance))
 
     return distance
