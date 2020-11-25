@@ -19,3 +19,5 @@
         }
     ]
 }
+// 调试测试时间,在命令行使用如下代码
+//  python -m cProfile -s cumulative src/main.py -t "assets/problem 2020-11-15 14-06-45/arr.tsp" -o "assets/problem 2020-11-15 14-06-45/obs.obs"
