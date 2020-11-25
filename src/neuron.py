@@ -60,27 +60,40 @@ def get_route(cities, network):
     return cities.sort_values('winner').index
 
 
-def get_ob_influence(ob, network, sigma=10):
+def get_ob_influence(obs, node, sigma=10):
     """
     k*sigma^2 determines the range of gaussian
     sigma: 可以看做一个邻域范围
-    sense: 精度范围,如果距离小于sense就视为没有影响.
+    note: obs是(n,2),node是(2,) 返回所有obs对node的影响
+    如果删去sum,可以计算一个 obs (2,)对所有 node (n,2) 的影响
     """
-    difference = network - ob
+    difference = node - obs
     distances = np.linalg.norm(difference, axis=1)
     # 沿方向向量移动的距离,为负时置零
     fix_dist = (sigma - distances).clip(0)
     # 获得单位方向向量
     distances[distances > sigma] = np.inf  # 超出sigma范围以外的设为无穷大不处理
     vec = difference / distances[:, np.newaxis]
-    # 计算影响
-    influence = vec * fix_dist[:, np.newaxis]  # 影响简化
+    # 计算影响,这里障碍物视为圆形
+    influence = vec * fix_dist[:, np.newaxis]
 
     # 不使用高斯函数了
     # influence = -np.exp(
     #     -distances**2 / (2 * sigma**2)
     # )[:, np.newaxis] * difference / distances[:, np.newaxis] * sigma
-    return influence
+    return influence.sum(axis=0)  # 所有的影响向量合并
+
+
+def get_ob_influences(network, obstacle, radius):
+    """
+    radius: 障碍物视为圆形,radius是半径
+    """
+
+    influences = np.apply_along_axis(
+        func1d=lambda p: get_ob_influence(obstacle, p, radius),  # 每个点独自面对所有障碍物
+        axis=1,
+        arr=network)
+    return influences
 
 
 def ver_vec(direction, vector):

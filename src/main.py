@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influence, get_route_vector, ver_vec, sepaprate_node
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -89,8 +89,8 @@ def som(target,
 
     norm_ans = normalization(cities, obs)
     cities, obs, span = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
-    # obs_n = obs[['x', 'y']].to_numpy()
-
+    obs = obs[['x', 'y']].to_numpy()
+    
     # The population size is 8 times the number of cities
     n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
     n = n + obs.shape[0] * 5 if obstacle is not None else n
@@ -121,13 +121,9 @@ def som(target,
         if obs is None:
             obs_delta = 0
         else:
-            obs_sample = obs.sample(1)[['x', 'y']].values
-            loser_idx = select_closest(network, obs_sample)
-            gaussian = get_neighborhood(loser_idx, n // 10, network.shape[0])
-            obs_influence = ver_vec(
-                np.roll(route_dir_vec, 1, axis=0),
-                get_ob_influence(obs_sample, network, sigma=obs_size))
-            obs_delta = gaussian[:, np.newaxis] * obs_influence
+            # obs_influence = ver_vec(np.roll(route_dir_vec, 1, axis=0),
+            #                         get_ob_influences(network, obs, obs_size))
+            obs_delta = get_ob_influences(network, obs, obs_size)
 
         # Update the network's weights (closer to the city)
         delta = city_delta + obs_delta
