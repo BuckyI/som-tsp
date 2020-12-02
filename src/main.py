@@ -90,7 +90,7 @@ def som(target,
     norm_ans = normalization(cities, obs)
     cities, obs, span = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
     obs = obs[['x', 'y']].to_numpy()
-    
+
     # The population size is 8 times the number of cities
     n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
     n = n + obs.shape[0] * 5 if obstacle is not None else n
@@ -116,6 +116,7 @@ def som(target,
         winner_idx = select_closest(network, city)
         gaussian = get_neighborhood(winner_idx, n // 10, network.shape[0])
         city_delta = gaussian[:, np.newaxis] * (city - network)
+        network += learning_rate * city_delta
 
         # choose a random obstacle
         if obs is None:
@@ -124,10 +125,11 @@ def som(target,
             # obs_influence = ver_vec(np.roll(route_dir_vec, 1, axis=0),
             #                         get_ob_influences(network, obs, obs_size))
             obs_delta = get_ob_influences(network, obs, obs_size)
+            network += learning_rate * obs_delta
 
         # Update the network's weights (closer to the city)
-        delta = city_delta + obs_delta
-        network += learning_rate * delta
+        # delta = city_delta + obs_delta
+        # network += learning_rate * delta
 
         # 修正结点分布,使之间隔更加均匀
         network = sepaprate_node(network)
@@ -160,6 +162,7 @@ def som(target,
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
+        delta = learning_rate * (city_delta + obs_delta)
         delta = np.linalg.norm(delta, axis=1)  # 计算变化的模长 (n,1) array
         if delta.max() < gate:
             # 当迭代变化最大值还小于设定的精度时就停止
