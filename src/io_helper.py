@@ -89,6 +89,22 @@ def read_obs(filename):
         return obstacles
 
 
+def read_forbidden_zones(filename):
+    """
+    filename: 文件路径名称
+    return: fbzs 列表,元素为ndarray,代表一个多边形区域
+    """
+    with open(filename, "r") as f:
+        fbzs = []
+        for line in f:
+            fbz = line.split(";")
+            for i, v in enumerate(fbz):
+                fbz[i] = [float(k) for k in v.split(",")]
+            else:
+                fbzs.append(np.array(fbz))
+    return fbzs
+
+
 def get_gif(folder, name="result"):
     """将folder下的所有.png图片合成为一个gif文件"""
     gif_images = []
