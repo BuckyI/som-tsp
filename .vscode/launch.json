@@ -19,9 +19,11 @@
             "console": "integratedTerminal",
             "args": [
                 "-t",
-                "assets/problem 2020-11-15 14-06-45/arr.tsp",
+                "assets/problem 2020-12-03 12-38-36/arr.tsp",
                 "-o",
-                "assets/problem 2020-11-15 14-06-45/obs.obs"
+                "assets/problem 2020-12-03 12-38-36/obs.obs",
+                "-f",
+                "assets/problem 2020-12-03 12-38-36/fbz.fbz"
             ]
         }
     ]

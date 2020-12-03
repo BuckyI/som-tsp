@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 
-from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info
+from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
@@ -26,6 +26,10 @@ def get_parser():
                         '--obstacle',
                         metavar="<filename>.obs",
                         help="load obstacles")
+    parser.add_argument('-f',
+                        '--forbidzone',
+                        metavar="<filename>.fbz",
+                        help="load forbidden zone")
     return parser.parse_args()
 
 
@@ -34,6 +38,7 @@ def main():
     arg = get_parser()
     target = read_tsp(arg.target)  # 读取城市坐标数据
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
+    fbzs = read_fbz(arg.forbidzone) if arg.forbidzone is not None else None
     print("Problem loading completed.")
 
     # 设定本次数据存储路径
@@ -97,6 +102,7 @@ def som(target,
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
+    old_delta = []
     gate = 1 / span  # 收敛条件设定，精度的映射
     obs_size = 4 * gate
     # Generate an adequate network of neurons:
@@ -164,7 +170,10 @@ def som(target,
             break
         delta = learning_rate * (city_delta + obs_delta)
         delta = np.linalg.norm(delta, axis=1)  # 计算变化的模长 (n,1) array
-        if delta.max() < gate:
+        old_delta.append(delta.max())
+        if len(old_delta) > network.shape[0]:  # 存储神经元结点数目的delta,避免概率影响收敛
+            old_delta.pop(0)
+        if max(old_delta) < gate:
             # 当迭代变化最大值还小于设定的精度时就停止
             print(
                 "Average movement has reduced to {},".format(delta.mean() *

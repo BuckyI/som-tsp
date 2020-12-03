@@ -89,7 +89,7 @@ def read_obs(filename):
         return obstacles
 
 
-def read_forbidden_zones(filename):
+def read_fbz(filename):
     """
     filename: 文件路径名称
     return: fbzs 列表,元素为ndarray,代表一个多边形区域
