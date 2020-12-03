@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -135,6 +135,22 @@ def som(target,
             obs_delta = get_ob_influences(network, obs, obs_size)
             network += learning_rate * obs_delta
 
+        # adjust the forbidden area
+        if fbzs is not None:
+            fbzs_delta = np.zeros(network.shape)
+            for fbz in fbzs:
+                for index, node in enumerate(network):
+                    if is_point_in_polygon(node, fbz) == 1:
+                        ver_dist_v = ver_vec(get_route_vector(fbz), fbz - node)
+                        # 计算 node to 边界的距离并找到最小值的位置
+                        ver_dist = np.linalg.norm(ver_dist_v, axis=1)
+                        closest = ver_dist.argmin()
+
+                        # update delta
+                        fbzs_delta[index] += ver_dist_v[closest]
+                        # 这里可以添加安全距离 / ver_dist[closest] * 1
+            network += learning_rate * fbzs_delta
+
         # Update the network's weights (closer to the city)
         # delta = city_delta + obs_delta
         # network += learning_rate * delta
@@ -175,6 +191,7 @@ def som(target,
         delta = network - old_network if old_network is not None else network
         max_delta = np.linalg.norm(delta, axis=1).max()  # 计算变化的模长 (n,1) array
         old_delta.append(max_delta)
+        old_network = network.copy()
         if len(old_delta) > network.shape[0]:  # 存储神经元结点数目的delta,避免概率影响收敛
             old_delta.pop(0)
         if max(old_delta) < gate:
