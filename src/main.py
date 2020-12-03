@@ -197,9 +197,9 @@ def som(target,
         if max(old_delta) < gate:
             # 当迭代变化最大值还小于设定的精度时就停止
             print(
-                "Average movement has reduced to {},".format(delta.mean() *
+                "Average movement has reduced to {},".format(np.mean(old_delta) *
                                                              span),
-                "max movement {},".format(delta.max() * span),
+                "max movement {},".format(np.max(old_delta) * span),
                 "finishing execution at {} iterations".format(i))
             break
     else:
