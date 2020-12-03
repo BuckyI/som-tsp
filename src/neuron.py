@@ -143,3 +143,49 @@ def sepaprate_node(network):
     ab_new = ver_vec(ac, ab) + 0.5 * ac
     delta = ab_new - ab  # 施加于b的更新向量
     return network + np.roll(delta, 1, axis=0)
+
+
+def is_point_in_polygon(point, arr):
+    """
+    point: x,y=point
+    arr:[ndarray] (n,2) polygon
+    return:
+    0: point is on the boundary;
+    1: point is in the polygon;
+    -1: point is not on the boundary;
+    """
+    max_x, max_y = arr.max(axis=0)
+    min_x, min_y = arr.min(axis=0)
+    if not min_x <= point[0] <= max_x and min_y <= point[1] <= max_y:
+        return -1  # the point is outside the box
+
+    point_start = arr[-1]  # from the last one to start (circle)
+    x, y = point  # take the x, y coordinates
+    count = 0
+    for i in arr:
+        point_end = i
+        # 点与多边形顶点重合
+        if (x == point_start[0]
+                and y == point_start[1]) or (x == point_end[0]
+                                             and y == point_end[1]):
+            return 0
+        # 点与多边形水平边界线重合
+        if point_end[1] == point_start[1] and y == point_start[1]:
+            return 0
+        # 判断线段两端点是否在射线两侧
+        if min(point_end[1], point_start[1]) <= y <= max(
+                point_end[1], point_start[1]):
+            # 这部分无法检测出在水平边界线上的点,所以之前排除掉了
+            # 线段上与射线的 Y 坐标相同的点的 X 坐标
+            x0 = point_end[0] - (point_end[1] - y) * (
+                point_end[0] - point_start[0]) / (point_end[1] -
+                                                  point_start[1])
+            # 点在多边形的边上
+            if x0 == x:
+                return 0
+            elif x0 > x:  # 水平向右射线穿过多边形的边界1次
+                count += 1
+
+        point_start = point_end
+    else:
+        return -1 if (count % 2) == 0 else 1
