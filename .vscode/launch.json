@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: generate",
+            "type": "python",
+            "request": "launch",
+            "program": "C:/Users/45489/Documents/GitHub/som-tsp/src/gene_tsp.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: main",
             "type": "python",
             "request": "launch",
