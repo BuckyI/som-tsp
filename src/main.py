@@ -149,6 +149,7 @@ def som(target,
                         # update delta
                         fbzs_delta[index] += ver_dist_v[closest]
                         # 这里可以添加安全距离 / ver_dist[closest] * 1
+            fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0), fbzs_delta) # 垂直方向影响
             network += learning_rate * fbzs_delta
 
         # Update the network's weights (closer to the city)
@@ -197,8 +198,8 @@ def som(target,
         if max(old_delta) < gate:
             # 当迭代变化最大值还小于设定的精度时就停止
             print(
-                "Average movement has reduced to {},".format(np.mean(old_delta) *
-                                                             span),
+                "Average movement has reduced to {},".format(
+                    np.mean(old_delta) * span),
                 "max movement {},".format(np.max(old_delta) * span),
                 "finishing execution at {} iterations".format(i))
             break
