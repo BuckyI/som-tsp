@@ -152,8 +152,9 @@ def normalize(points):
     return norm.apply(lambda p: ratio * p, axis=1)
 
 
-def normalization(*dfs):
+def normalization(fbzs=None, *dfs):
     """
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!待完善
     *dfs: DataFrame list
     return: ([*fixed_dfs],max_dif)
     max_dif: 所有坐标中最大的跨度,根据这个对整体缩小
@@ -168,6 +169,11 @@ def normalization(*dfs):
         offset_x.append(i.min()[0])
         offset_y.append(i.min()[1])
 
+    for i in fbzs:
+        diff.append(max(i.max(axis=0) - i.min(axis=0)))  # x,y最大跨度
+        offset_x.append(i.min(axis=0)[0])
+        offset_y.append(i.min(axis=0)[1])
+
     dif = max(diff)
     offset = (min(offset_x), min(offset_y))
     result = []
@@ -177,4 +183,9 @@ def normalization(*dfs):
             continue
         temp = (i[['x', 'y']] - offset) / dif
         result.append(temp)
-    return result, dif
+
+    for i, v in enumerate(fbzs):
+        fbzs[i] = (v - offset) / dif
+
+    info = {"result": result, "dif": dif, "fbzs": fbzs}
+    return info

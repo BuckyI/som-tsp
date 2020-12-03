@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from neuron import get_route_vector
+import numpy as np
 
 
 def input_points(x_range=(0, 100),
@@ -97,15 +98,6 @@ def plot_process(axes, cities, path, environment={}):
     # path 以有向线段的形式
     if type(path).__name__ == 'DataFrame':
         path = path[['x', 'y']].to_numpy()
-    # axes.plot(
-    #     x,  # x
-    #     y,  # y
-    #     'r.',  # red dot (actually it's blue!)
-    #     ls='-',  # line style -
-    #     color='#0063ba',
-    #     label="path",
-    #     linewidth=1,
-    #     markersize=2)  # the s of marker is 4
     vec = get_route_vector(path, d=0, t=0)
     axes.quiver(
         path[:, 0],  # X
@@ -138,6 +130,11 @@ def plot_process(axes, cities, path, environment={}):
                      s=4,
                      label="obstacle")
 
+    fbzs = environment.get("fbzs", None)
+    if fbzs is not None:
+        for fbz in fbzs:
+            fbz = np.row_stack((fbz, fbz[0]))  # 末尾添加开头
+            plt.plot(fbz[:, 0], fbz[:, 1], color="#FFB6C1", label="forbidzone")
     # 更新标签
     axes.legend()
     return axes

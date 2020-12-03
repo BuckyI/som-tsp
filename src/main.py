@@ -49,7 +49,7 @@ def main():
     start_time = time.process_time()
 
     # 获得路径结果
-    distance = som(target, 100000, 0.8, obstacle,
+    distance = som(target, 100000, 0.8, obstacle, fbzs,
                    data_path)  # from neuron 0 开始的路径 index
 
     run_time = time.process_time() - start_time
@@ -74,6 +74,7 @@ def som(target,
         iterations,
         learning_rate=0.8,
         obstacle=None,
+        fbzs=None,
         data_path="assets/"):
     """
     target: [DataFrame] ['city', 'y', 'x']
@@ -92,8 +93,9 @@ def som(target,
     cities = target.copy()[['x', 'y']]
     obs = obstacle.copy()[['x', 'y']] if obstacle is not None else None
 
-    norm_ans = normalization(cities, obs)
-    cities, obs, span = norm_ans[0][0], norm_ans[0][1], norm_ans[1]
+    norm_ans = normalization(fbzs, cities, obs)
+    cities, obs, span, fbzs = norm_ans["result"][0], norm_ans["result"][
+        1], norm_ans["dif"], norm_ans["fbzs"]
     obs = obs[['x', 'y']].to_numpy()
 
     # The population size is 8 times the number of cities
@@ -156,6 +158,7 @@ def som(target,
                 obstacle=obs,
                 obs_size=obs_size,
                 span=span,
+                fbzs=fbzs,
             )
             update_figure(axes, clean=True)
 
@@ -193,6 +196,7 @@ def som(target,
         obstacle=obs,
         obs_size=obs_size,
         span=span,
+        fbzs=fbzs,
     )
 
     # 计算路径距离
