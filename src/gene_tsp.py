@@ -7,7 +7,7 @@ import tkinter as tk
 import plot as p
 
 
-def arr_plot(arr, obs, savepath=None):
+def arr_plot(arr, obs, fbzs=None, savepath=None):
     "for testing useful for Dataframe and ndarray"
 
     def get_xy(arr):
@@ -23,6 +23,10 @@ def arr_plot(arr, obs, savepath=None):
     plt.scatter(data[0], data[1], color="red", label="city")
     data = get_xy(obs)
     plt.scatter(data[0], data[1], color="black", label="obstacle")
+    if fbzs is not None:
+        for i in fbzs:
+            fbz = np.row_stack((i, i[0]))  # 末尾添加开头
+            plt.plot(fbz[:, 0], fbz[:, 1])
     plt.legend()
     if savepath is not None:
         plt.savefig(savepath + "problem.png",
@@ -63,9 +67,30 @@ def generate(x_range=(0, 100), y_range=(0, 100)):
         obs.append(data)
         plt.scatter(data[0], data[1], marker="x", color="#DC143C", s=10)
     obs = pd.DataFrame(obs, columns=["x", "y"])
+
+    axis.set_title("get forbidden area")
+    fbzs = []  # 含有ndarray的列表
+    while True:
+        fbz = []
+        while True:
+            data = axis.figure.ginput(1)
+            if not data:
+                break
+            else:
+                data = data[0]
+            fbz.append(data)
+            plt.scatter(data[0], data[1], marker="o", color="#FFB6C1", s=10)
+        # 读取一个之后画出区域
+        if len(fbz) == 0:
+            break
+        fbz = np.array(fbz)
+        fbzs.append(fbz)
+        cfbz = np.row_stack((fbz, fbz[0]))  # 末尾添加开头
+        plt.plot(cfbz[:, 0], cfbz[:, 1])
+
     plt.close()
     plt.ioff()
-    return city, obs
+    return city, obs, fbzs
 
 
 def generate_target(x_range=(0, 100), y_range=(0, 100), way=None, info=""):
@@ -206,11 +231,21 @@ def generate_obs(data, filename="assets/obs.obs", comment="hello world"):
         f.write("EOF\n")
 
 
+def generate_forbidden_zones(data, filename="assets/fbz.fbz"):
+    with open(filename, "w") as f:
+        for fbz in fbzs:
+            string_ls = []
+            for point in fbz:
+                string_ls.append("{},{}".format(point[0], point[1]))
+            f.write(";".join(string_ls) + "\n")
+
+
 if __name__ == "__main__":
     time_id = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())
     path = "assets/" + "problem " + time_id + "/"
     os.mkdir(path)
-    arr, obs = generate()
-    arr_plot(arr, obs, path)
+    arr, obs, fbzs = generate()
+    arr_plot(arr, obs, fbzs=fbzs, savepath=path)
     generate_tsp(arr, path + "arr.tsp")
     generate_obs(obs, path + "obs.obs")
+    generate_forbidden_zones(fbzs, path + "fbz.fbz")
