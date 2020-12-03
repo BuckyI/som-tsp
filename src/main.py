@@ -104,7 +104,7 @@ def som(target,
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
-    old_delta = []
+    old_delta, old_network = [], 0  # 用来判断变化大小的收敛变量
     gate = 1 / span  # 收敛条件设定，精度的映射
     obs_size = 4 * gate
     # Generate an adequate network of neurons:
@@ -171,9 +171,10 @@ def som(target,
             print('Learning rate has completely decayed, finishing execution',
                   'at {} iterations'.format(i))
             break
-        delta = learning_rate * (city_delta + obs_delta)
-        delta = np.linalg.norm(delta, axis=1)  # 计算变化的模长 (n,1) array
-        old_delta.append(delta.max())
+
+        delta = network - old_network if old_network is not None else network
+        max_delta = np.linalg.norm(delta, axis=1).max()  # 计算变化的模长 (n,1) array
+        old_delta.append(max_delta)
         if len(old_delta) > network.shape[0]:  # 存储神经元结点数目的delta,避免概率影响收敛
             old_delta.pop(0)
         if max(old_delta) < gate:
