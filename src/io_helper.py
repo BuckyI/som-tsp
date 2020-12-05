@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import imageio
 import os
+import logging
 
 
 def read_tsp(filename):
@@ -26,7 +27,7 @@ def read_tsp(filename):
                 node_coord_start = i  # 结点坐标开始处
             i = i + 1
 
-        print('Problem with {} cities read.'.format(dimension))
+        logging.info('Problem with %s cities read.', dimension)
 
         f.seek(0)  # 指针回到开头，刚才readlines到达EOF了
 
@@ -68,7 +69,7 @@ def read_obs(filename):
                 start = i  # 结点坐标开始处
             i = i + 1
 
-        print('Environment with {} obstacles read.'.format(dimension))
+        logging.info('Environment with %s obstacles read.', dimension)
 
         f.seek(0)  # 指针回到开头，刚才readlines到达EOF了
 
@@ -102,6 +103,8 @@ def read_fbz(filename):
                 fbz[i] = [float(k) for k in v.split(",")]
             else:
                 fbzs.append(np.array(fbz))
+
+    logging.info('Environment with %s forbidden zones read.', len(fbzs))
     return fbzs
 
 

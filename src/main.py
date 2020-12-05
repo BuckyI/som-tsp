@@ -8,6 +8,7 @@ from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
 import time
+import logging
 
 
 def get_parser():
@@ -34,32 +35,40 @@ def get_parser():
 
 
 def main():
+    # 本次程序运行相关配置设定
+    time_id = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())  # 标识本次运行
+    data_path = "assets/" + time_id + "/"  # 作为运行数据存储的路径
+    os.mkdir(data_path)  # 建立文件夹
+
+    st = logging.StreamHandler()
+    st.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+    st.setLevel(logging.INFO)  # 屏幕只显示 INFO 以上
+    st.addFilter(logging.Filter('root'))
+    fh = logging.FileHandler(data_path + 'log.log', 'a')
+    fh.setFormatter(
+        logging.Formatter(
+            fmt='%(asctime)s - %(levelname)s - %(funcName)s: %(message)s',
+            datefmt='%Y-%m-%d  %H:%M:%S %a'))
+    fh.addFilter(logging.Filter('root'))
+    logging.basicConfig(level=logging.DEBUG, handlers=[st, fh])
+
+    start_time = time.process_time()
+
     # 加载 problem
     arg = get_parser()
     target = read_tsp(arg.target)  # 读取城市坐标数据
     obstacle = read_obs(arg.obstacle) if arg.obstacle is not None else None
     fbzs = read_fbz(arg.forbidzone) if arg.forbidzone is not None else None
-    print("Problem loading completed.")
-
-    # 设定本次数据存储路径
-    time_id = time.strftime("%Y-%m-%d %H-%M-%S", time.localtime())  # 标识本次运行
-    data_path = "assets/" + time_id + "/"  # 作为运行数据存储的路径
-    os.mkdir(data_path)  # 建立文件夹
-
-    start_time = time.process_time()
+    logging.info("Problem loading completed.")
 
     # 获得路径结果
     distance = som(target, 100000, 0.8, obstacle, fbzs,
                    data_path)  # from neuron 0 开始的路径 index
 
     run_time = time.process_time() - start_time
-    print('SOM training completed. Running time: %s Seconds' % (run_time))
+    logging.info('SOM training completed. Running time: %s Seconds', run_time)
 
     # 生成相关文件
-    # generate_tour(route_index,
-    #               filename=data_path + "tour.tour",
-    #               length=distance,
-    #               comment=time_id)
     get_gif(data_path)
     save_info(
         data_path,
@@ -109,7 +118,7 @@ def som(target,
     obs_size = 4 * gate
     # Generate an adequate network of neurons:
     network = generate_network(n)  # 2列矩阵
-    print('Network of {} neurons created. Starting the iterations:'.format(n))
+    logging.info('Network of %s neurons created. Starting iterations:', n)
 
     for i in range(iterations):
         if not i % 100:
@@ -186,12 +195,10 @@ def som(target,
 
         # Check if any parameter has completely decayed. 收敛判断
         if n < 1:
-            print('Radius has completely decayed, finishing execution',
-                  'at {} iterations'.format(i))
+            finish_info = 'Radius has completely decayed.'
             break
         if learning_rate < 0.001:
-            print('Learning rate has completely decayed, finishing execution',
-                  'at {} iterations'.format(i))
+            finish_info = 'Learning rate has completely decayed.'
             break
 
         delta = network - old_network if old_network is not None else network
@@ -202,16 +209,15 @@ def som(target,
             old_delta.pop(0)
         if max(old_delta) < gate:
             # 当迭代变化最大值还小于设定的精度时就停止
-            print(
-                "Average movement has reduced to {},".format(
-                    np.mean(old_delta) * span),
-                "max movement {},".format(np.max(old_delta) * span),
-                "finishing execution at {} iterations".format(i))
+            finish_info = "Average movement has reduced to {},".format(
+                np.mean(old_delta) * span)
+            finish_info += "max movement {},".format(np.max(old_delta) * span)
             break
-    else:
-        print('Completed {} iterations.'.format(iterations))
 
     # 训练完成后进行的工作
+    finish_info += "finishing execution at {} iterations".format(i)
+    logging.info(finish_info)
+
     # 保存路径图片
     plot_network(
         cities,
@@ -225,7 +231,7 @@ def som(target,
 
     # 计算路径距离
     distance = route_distance(network) * span  # 恢复到原坐标系下的距离
-    print('Route found of length {}'.format(distance))
+    logging.info('Route found of length %s', distance)
 
     return distance
 
