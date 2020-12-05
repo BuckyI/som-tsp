@@ -148,9 +148,14 @@ def som(target,
 
                         # update delta
                         fbzs_delta[index] += ver_dist_v[closest]
-                        # 这里可以添加安全距离 / ver_dist[closest] * 1
-            fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0), fbzs_delta) # 垂直方向影响
-            network += learning_rate * fbzs_delta
+            #             # 这里可以添加安全距离 / ver_dist[closest] * 1
+            # a = np.linalg.norm(fbzs_delta, axis=1)
+            # fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0),
+            #                      fbzs_delta)  # 垂直方向影响
+            # b = np.linalg.norm(fbzs_delta, axis=1)
+            # b[b == 0] = np.inf
+            # fbzs_delta = fbzs_delta * a[:, np.newaxis] / b[:, np.newaxis]
+            # network += learning_rate * fbzs_delta
 
         # Update the network's weights (closer to the city)
         # delta = city_delta + obs_delta
