@@ -135,8 +135,26 @@ def plot_process(axes, cities, path, environment={}):
         for fbz in fbzs:
             fbz = np.row_stack((fbz, fbz[0]))  # 末尾添加开头
             plt.plot(fbz[:, 0], fbz[:, 1], color="#FFB6C1", label="forbidzone")
+
+    ## 测试用代码
+    # fbz = environment.get("fbz", None)
+    # delta = environment.get("delta", None)
+    # if delta is not None and fbz is not None:
+    #     axes.quiver(
+    #         fbz[:, 0],  # X
+    #         fbz[:, 1],  # Y
+    #         delta[:, 0],  # U
+    #         delta[:, 1],  # V
+    #         angles='xy',
+    #         scale_units='xy',
+    #         scale=1,  # 长短
+    #         units='xy',
+    #         width=0.003,  # 粗细
+    #         pivot='tail',
+    #         color="#6495ED")
     # 更新标签
     axes.legend()
+    # update_figure(axes, clean=True)
     return axes
 
 

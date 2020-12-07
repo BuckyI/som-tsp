@@ -1,7 +1,7 @@
 import argparse
 import os
 import numpy as np
-
+import matplotlib.pyplot as plt
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon
 from distance import select_closest, route_distance  # , euclidean_distance
@@ -136,35 +136,34 @@ def som(target,
         network += learning_rate * city_delta
 
         # choose a random obstacle
-        if obs is None:
-            obs_delta = 0
-        else:
-            # obs_influence = ver_vec(np.roll(route_dir_vec, 1, axis=0),
-            #                         get_ob_influences(network, obs, obs_size))
-            obs_delta = get_ob_influences(network, obs, obs_size)
-            network += learning_rate * obs_delta
+        # if obs is None:
+        #     obs_delta = 0
+        # else:
+        #     # obs_influence = ver_vec(np.roll(route_dir_vec, 1, axis=0),
+        #     #                         get_ob_influences(network, obs, obs_size))
+        #     obs_delta = get_ob_influences(network, obs, obs_size)
+        #     network += learning_rate * obs_delta
 
         # adjust the forbidden area
-        if fbzs is not None:
-            fbzs_delta = np.zeros(network.shape)
-            for fbz in fbzs:
-                for index, node in enumerate(network):
-                    if is_point_in_polygon(node, fbz) == 1:
-                        ver_dist_v = ver_vec(get_route_vector(fbz), fbz - node)
-                        # 计算 node to 边界的距离并找到最小值的位置
-                        ver_dist = np.linalg.norm(ver_dist_v, axis=1)
-                        closest = ver_dist.argmin()
+        # if fbzs is not None:
+        #     fbzs_delta = np.zeros(network.shape)
+        #     for fbz in fbzs:
+        #         for index, node in enumerate(network):
+        #             if is_point_in_polygon(node, fbz) == 1:
+        #                 ver_dist_v = ver_vec(get_route_vector(fbz), fbz - node)
+        #                 # 计算 node to 边界的距离并找到最小值的位置
+        #                 ver_dist = np.linalg.norm(ver_dist_v, axis=1)
+        #                 closest = ver_dist.argmin()
 
-                        # update delta
-                        fbzs_delta[index] += ver_dist_v[closest]
+        #                 # update delta
+        #                 fbzs_delta[index] += ver_dist_v[closest]
             #             # 这里可以添加安全距离 / ver_dist[closest] * 1
             # a = np.linalg.norm(fbzs_delta, axis=1)
             # fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0),
             #                      fbzs_delta)  # 垂直方向影响
             # b = np.linalg.norm(fbzs_delta, axis=1)
-            # b[b == 0] = np.inf
-            # fbzs_delta = fbzs_delta * a[:, np.newaxis] / b[:, np.newaxis]
-            # network += learning_rate * fbzs_delta
+            # fbzs_delta[b != 0] *= (a[b != 0] / b[b != 0])[:, np.newaxis]
+            # network += fbzs_delta
 
         # Update the network's weights (closer to the city)
         # delta = city_delta + obs_delta
