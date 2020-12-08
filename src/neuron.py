@@ -111,6 +111,15 @@ def ver_vec(direction, vector):
     return np.array([x, y]).T / (x0**2 + y0**2)[:, np.newaxis]
 
 
+def unit_ver_vec(vector):
+    """get unit vertical vector 对于零向量仍然返回零向量"""
+    v = vector.copy()
+    v[:, 0], v[:, 1] = v[:, 1], -v[:, 0]
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    v[np.isnan(v)] = 0
+    return v
+
+
 def get_route_vector(network, d=0, t=0):
     """
     network: [ndarray] 坐标点矩阵
@@ -143,6 +152,18 @@ def sepaprate_node(network):
     ab_new = ver_vec(ac, ab) + 0.5 * ac
     delta = ab_new - ab  # 施加于b的更新向量
     return network + np.roll(delta, 1, axis=0)
+
+
+
+def is_node_in_trouble(node, **environment):
+    """"""
+    fbzs = environment.get("fbzs", None)
+    if fbzs is not None:
+        for fbz in fbzs:
+            if is_point_in_polygon(node, fbz) == 1:
+                return True
+
+    return False
 
 
 def is_point_in_polygon(point, arr):
