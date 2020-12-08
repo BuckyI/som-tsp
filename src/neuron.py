@@ -154,6 +154,42 @@ def sepaprate_node(network):
     return network + np.roll(delta, 1, axis=0)
 
 
+def sep_and_close_nodes(network, fbzs, r=5, decay=1):
+    """fbz 是一个临时变量,后续可以更改为**karg
+    r 是邻域半径
+    s-->m-->d
+    m:network
+    """
+    s = np.roll(network, 1, axis=0)
+    d = np.roll(network, -1, axis=0)
+    sd = d - s
+    base_net = 0.5 * (s + d)  # 起点
+    step = np.linalg.norm(sd, axis=1, keepdims=True) * 0.5 * decay  # 一步的步长
+    ver_sd = unit_ver_vec(sd)  # 前进的方向
+    get_index = lambda arr: np.apply_along_axis(
+        is_node_in_trouble, 1, arr, fbzs=fbzs)  # 获得处于障碍物内部的结点的索引
+
+    temp_net = base_net
+    temp_vec = ver_sd
+    temp_step = step
+    index = get_index(base_net)
+    for k in range(r):
+        temp_net = temp_net[index]  # 只处理在障碍物内部的nodes
+        temp_vec = temp_vec[index]
+        temp_step = temp_step[index]
+        up = temp_net + k * temp_step * temp_vec
+        down = temp_net - k * temp_step * temp_vec
+        good_up = np.logical_not(get_index(up))
+        good_down = np.logical_not(get_index(down))
+        temp_net[good_down] = down[good_down]
+        temp_net[good_up] = up[good_up]
+
+        index = np.logical_not(np.logical_or(good_down, good_up))
+        if not index.any():  # 所有的点都脱离障碍物了
+            break
+
+    return base_net
+
 
 def is_node_in_trouble(node, **environment):
     """"""

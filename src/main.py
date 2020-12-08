@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon, sep_and_close_nodes
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -157,20 +157,22 @@ def som(target,
 
         #                 # update delta
         #                 fbzs_delta[index] += ver_dist_v[closest]
-            #             # 这里可以添加安全距离 / ver_dist[closest] * 1
-            # a = np.linalg.norm(fbzs_delta, axis=1)
-            # fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0),
-            #                      fbzs_delta)  # 垂直方向影响
-            # b = np.linalg.norm(fbzs_delta, axis=1)
-            # fbzs_delta[b != 0] *= (a[b != 0] / b[b != 0])[:, np.newaxis]
-            # network += fbzs_delta
+        #             # 这里可以添加安全距离 / ver_dist[closest] * 1
+        # a = np.linalg.norm(fbzs_delta, axis=1)
+        # fbzs_delta = ver_vec(np.roll(route_dir_vec, 1, axis=0),
+        #                      fbzs_delta)  # 垂直方向影响
+        # b = np.linalg.norm(fbzs_delta, axis=1)
+        # fbzs_delta[b != 0] *= (a[b != 0] / b[b != 0])[:, np.newaxis]
+        # network += fbzs_delta
 
         # Update the network's weights (closer to the city)
         # delta = city_delta + obs_delta
         # network += learning_rate * delta
 
         # 修正结点分布,使之间隔更加均匀
-        network = sepaprate_node(network)
+        # network = sepaprate_node(network)
+
+        network = sep_and_close_nodes(network, fbzs, decay=learning_rate)
 
         # Decay the variables
         # 学习率更新 对应了 e^{-t/t0} t0=33332.83
