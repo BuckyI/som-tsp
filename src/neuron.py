@@ -1,6 +1,27 @@
 import numpy as np
-
+import logging
 from distance import select_closest
+
+
+def test_plot(arr1, arr2=None, filename="test"):
+    import matplotlib.pyplot as plt
+    plt.axis('equal')
+    plt.scatter(arr1[:, 0], arr1[:, 1], color='#FFB6C1', s=0.1)
+    if arr2 is not None:
+        plt.scatter(arr2[:, 0], arr2[:, 1], color='#FFD700', s=0.1)
+        plt.quiver(
+            arr1[:, 0],  # X
+            arr1[:, 1],  # Y
+            (arr2 - arr1)[:, 0],  # U
+            (arr2 - arr1)[:, 1],  # V
+            angles='xy',
+            scale_units='xy',
+            scale=1,  # 长短
+            units='xy',
+            width=0.003,  # 粗细
+            pivot='tail',
+            color="#6495ED")
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0, dpi=400)
 
 
 def generate_network(size):
