@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon, sep_and_close_nodes
 from distance import select_closest, route_distance  # , euclidean_distance
-from plot import plot_network, plot_route, update_figure
+from plot_data import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
 import time
 import logging
@@ -172,7 +172,10 @@ def som(target,
         # 修正结点分布,使之间隔更加均匀
         # network = sepaprate_node(network)
 
-        network = sep_and_close_nodes(network, fbzs, decay=learning_rate)
+        network = sep_and_close_nodes(network,
+                                      decay=learning_rate,
+                                      targets=cities[['x', 'y']].to_numpy(),
+                                      fbzs=fbzs)
 
         # Decay the variables
         # 学习率更新 对应了 e^{-t/t0} t0=33332.83

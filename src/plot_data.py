@@ -4,6 +4,26 @@ from neuron import get_route_vector
 import numpy as np
 
 
+def test_plot(arr1, arr2, filename="test"):
+    import matplotlib.pyplot as plt
+    plt.axis('equal')
+    plt.scatter(arr1[:, 0], arr1[:, 1], color='r', s=0.1)
+    plt.scatter(arr2[:, 0], arr2[:, 1], color='y', s=0.1)
+    plt.quiver(
+        arr1[:, 0],  # X
+        arr1[:, 1],  # Y
+        (arr2 - arr1)[:, 0],  # U
+        (arr2 - arr1)[:, 1],  # V
+        angles='xy',
+        scale_units='xy',
+        scale=1,  # 长短
+        units='xy',
+        width=0.003,  # 粗细
+        pivot='tail',
+        color="#6495ED")
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0, dpi=200)
+
+
 def input_points(x_range=(0, 100),
                  y_range=(0, 100),
                  title="left click: get point, right: cancel, mid: finish"):

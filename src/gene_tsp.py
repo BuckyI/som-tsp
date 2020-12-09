@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import time
 import tkinter as tk
-import plot as p
+import plot_data as p
 
 
 def arr_plot(arr, obs, fbzs=None, savepath=None):
