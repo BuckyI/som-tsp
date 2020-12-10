@@ -281,12 +281,14 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
     # node 往看到的目标点走一步
     # base_net[indices] = base_net[indices] + unit_head_dir * step[indices]
     # 避障
-    result = get_away(base_net,
-                      step,
-                      unit_head_dir,
-                      k=0,
-                      max_k=5 * r,
-                      **environment)
+    result = get_away(
+        base_net,
+        step,
+        unit_head_dir,
+        k=0,
+        max_k=5 * r / decay,  # 后面单个步长短但是最大总步长变大
+        **environment,
+    )
     # 虽然是从0开始,但是线会自然变直
     return result
 

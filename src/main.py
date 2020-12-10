@@ -109,7 +109,8 @@ def som(target,
 
     # The population size is 8 times the number of cities
     n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
-    n = n + obs.shape[0] * 5 if obstacle is not None else n
+    n = n + obs.shape[0] * 2 if obstacle is not None else n
+    n = n + len(fbzs) * 2 if obstacle is not None else n
 
     # parameters set to observe and evaluate 自己加的
     axes = update_figure()
