@@ -5,10 +5,11 @@ from distance import select_closest
 
 def test_plot(arr1, arr2=None, filename="test"):
     import matplotlib.pyplot as plt
+    plt.cla()
     plt.axis('equal')
-    plt.scatter(arr1[:, 0], arr1[:, 1], color='#FFB6C1', s=0.1)
+    plt.scatter(arr1[:, 0], arr1[:, 1], color='#4169E1', s=0.1)
     if arr2 is not None:
-        plt.scatter(arr2[:, 0], arr2[:, 1], color='#FFD700', s=0.1)
+        plt.scatter(arr2[:, 0], arr2[:, 1], color='#DC143C', s=0.1)
         plt.quiver(
             arr1[:, 0],  # X
             arr1[:, 1],  # Y
@@ -20,7 +21,7 @@ def test_plot(arr1, arr2=None, filename="test"):
             units='xy',
             width=0.003,  # 粗细
             pivot='tail',
-            color="#6495ED")
+            color="#3CB371")
     plt.savefig(filename, bbox_inches='tight', pad_inches=0, dpi=400)
 
 
@@ -141,6 +142,14 @@ def unit_ver_vec(vector):
     return v
 
 
+def unit_vector(vector):
+    "vector.shape==(n,2) 返回单位向量"
+    v = vector.copy()
+    v /= np.linalg.norm(v, axis=1, keepdims=True)
+    v[np.isnan(v)] = 0  # 对于零向量,仍然返回零向量
+    return v
+
+
 def get_route_vector(network, d=0, t=0):
     """
     network: [ndarray] 坐标点矩阵
@@ -175,41 +184,76 @@ def sepaprate_node(network):
     return network + np.roll(delta, 1, axis=0)
 
 
-def sep_and_close_nodes(network, fbzs, r=5, decay=1):
-    """fbz 是一个临时变量,后续可以更改为**karg
+def get_away(network, step, head_dir, k=0, max_k=5, **environment):
+    "network 沿着 dir 方向脱离障碍物, 最大步长为 max_k*step"
+
+    def get_index(network, **environment):
+        # 获得处于障碍物内部的结点的索引
+        return np.apply_along_axis(is_node_in_trouble, 1, network,
+                                   **environment)
+
+    # step 1 update and find the bad nodes
+    if k == 0:
+        # k==0 时更新数值为0,省去第一轮计算
+        new_index = get_index(network, **environment)
+    elif k > max_k:
+        # k 过大时,不进行更新,限制get_away的更新幅度(最大步长)
+        new_index = np.array([False])
+    else:
+        # 更新
+        up = network + k * step * head_dir
+        down = network - k * step * head_dir
+        good_up = ~get_index(up, **environment)
+        good_down = ~get_index(down, **environment)
+        network[good_down] = down[good_down]
+        network[good_up] = up[good_up]
+
+        new_index = ~(good_down | good_up)  # 仍然位于障碍物内的点
+
+    # step 2 update the bad nodes
+    if new_index.any():  # 存在处于障碍物内的点
+        network[new_index] = get_away(
+            network=network[new_index],
+            step=step[new_index],
+            head_dir=head_dir[new_index],
+            k=k + 1,
+            max_k=max_k,
+            **environment,
+        )
+
+    return network
+
+
+def sep_and_close_nodes(network, r=3, decay=1, **environment):
+    """
     r 是邻域半径
     s-->m-->d
     m:network
+    vx表示垂直向量,从sd中点指向x
     """
-    s = np.roll(network, 1, axis=0)
-    d = np.roll(network, -1, axis=0)
+    gate = environment.get("gate", 1)  # 最大单次步长
+
+    m = network
+    s = np.roll(m, 1, axis=0)
+    d = np.roll(m, -1, axis=0)
     sd = d - s
-    base_net = 0.5 * (s + d)  # 起点
-    step = np.linalg.norm(sd, axis=1, keepdims=True) * 0.5 * decay  # 一步的步长
-    ver_sd = unit_ver_vec(sd)  # 前进的方向
-    get_index = lambda arr: np.apply_along_axis(
-        is_node_in_trouble, 1, arr, fbzs=fbzs)  # 获得处于障碍物内部的结点的索引
+    vm = ver_vec(sd, m - s)  # sm 垂直 sd 分解
+    # NOTE: 这里需要保证vm没有零向量,不过一般是没有
 
-    temp_net = base_net
-    temp_vec = ver_sd
-    temp_step = step
-    index = get_index(base_net)
-    for k in range(r):
-        temp_net = temp_net[index]  # 只处理在障碍物内部的nodes
-        temp_vec = temp_vec[index]
-        temp_step = temp_step[index]
-        up = temp_net + k * temp_step * temp_vec
-        down = temp_net - k * temp_step * temp_vec
-        good_up = np.logical_not(get_index(up))
-        good_down = np.logical_not(get_index(down))
-        temp_net[good_down] = down[good_down]
-        temp_net[good_up] = up[good_up]
+    # target_point = [0, 0]  # 如果能够确定离得最近的target点,就是那个了
+    head_dir = unit_vector(-vm)  # 前进的方向
+    step = np.linalg.norm(sd, axis=1, keepdims=True) * 0.5  # 一步的步长
+    step = step.clip(-gate, gate) * decay
+    base_net = s + 0.5 * sd + vm  # 水平先给分散了
 
-        index = np.logical_not(np.logical_or(good_down, good_up))
-        if not index.any():  # 所有的点都脱离障碍物了
-            break
+    result = get_away(base_net, step, head_dir, max_k=r, **environment)
+    return result
 
-    return base_net
+
+def is_target_between_line(sd, st, dt):
+    "判断t是否在sd的两点之间的带状空间"
+    inside = (sd * st).sum(axis=1) * (sd * dt).sum(axis=1) < 0
+    return inside
 
 
 def is_node_in_trouble(node, **environment):
@@ -219,6 +263,13 @@ def is_node_in_trouble(node, **environment):
         for fbz in fbzs:
             if is_point_in_polygon(node, fbz) == 1:
                 return True
+
+    obstacle = environment.get("obstacle", None)
+    obs_size = environment.get("obs_size", 1)
+    if obstacle is not None:
+        distances = np.linalg.norm(node - obstacle, axis=1)
+        if distances[distances < obs_size].any():
+            return True
 
     return False
 

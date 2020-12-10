@@ -172,11 +172,15 @@ def som(target,
         # 修正结点分布,使之间隔更加均匀
         # network = sepaprate_node(network)
 
-        network = sep_and_close_nodes(network,
-                                      decay=learning_rate,
-                                      targets=cities[['x', 'y']].to_numpy(),
-                                      fbzs=fbzs)
-
+        network = sep_and_close_nodes(
+            network,
+            decay=learning_rate,
+            targets=cities[['x', 'y']].to_numpy(),
+            obstacle=obs,  # 圆形障碍物
+            obs_size=obs_size,  # 障碍物半径
+            fbzs=fbzs,  # 不规则障碍物
+            gate=gate,  # 最大更新步长
+        )
         # Decay the variables
         # 学习率更新 对应了 e^{-t/t0} t0=33332.83
         learning_rate = learning_rate * 0.99997
