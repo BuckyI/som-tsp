@@ -250,10 +250,13 @@ def sep_and_close_nodes(network, r=3, decay=1, **environment):
     return result
 
 
-def is_target_between_line(sd, st, dt):
-    "判断t是否在sd的两点之间的带状空间"
-    inside = (sd * st).sum(axis=1) * (sd * dt).sum(axis=1) < 0
-    return inside
+def is_target_between_line(sd, st):
+    "判断t是否在sd的两点之间的带状空间,不包含边界"
+    # 注释掉的是之前的方法,需要三个参数
+    # inside = (sd * st).sum(axis=1) * (sd * dt).sum(axis=1) < 0
+    x = (sd * st).sum(axis=1)  # st 投射在 sd 上的长度
+
+    return (x > 0) & (x < np.linalg.norm(sd, axis=1))
 
 
 def is_node_in_trouble(node, **environment):
