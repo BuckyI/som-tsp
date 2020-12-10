@@ -198,7 +198,7 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
         new_index = get_index(network, **environment)
     elif k > max_k:
         # k 过大时,不进行更新,限制get_away的更新幅度(最大步长)
-        new_index = np.array([False])
+        new_index = np.array(False)
     else:
         # 更新
         up = network + k * step * head_dir
@@ -224,7 +224,7 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
     return network
 
 
-def sep_and_close_nodes(network, r=3, decay=1, **environment):
+def sep_and_close_nodes(network, r=10, decay=1, **environment):
     """
     r 是邻域半径
     s-->m-->d
@@ -236,7 +236,11 @@ def sep_and_close_nodes(network, r=3, decay=1, **environment):
     m = network
     s = np.roll(m, 1, axis=0)
     d = np.roll(m, -1, axis=0)
-    sd = d - s
+    sd = d - s  # 衡量区域宽度,对区域进行分割的依据
+    step = (np.linalg.norm(sd, axis=1, keepdims=True) * 0.1).clip(
+        0.01 * gate, gate) * decay  # 一步的步长
+    max_distance = 5 * r * step  # 上下最远范围
+
     vm = ver_vec(sd, m - s)  # sm 垂直 sd 分解
     # NOTE: 这里需要保证vm没有零向量,不过一般是没有
 
@@ -246,7 +250,8 @@ def sep_and_close_nodes(network, r=3, decay=1, **environment):
     step = step.clip(-gate, gate) * decay
     base_net = s + 0.5 * sd + vm  # 水平先给分散了
 
-    result = get_away(base_net, step, head_dir, max_k=r, **environment)
+    result = get_away(base_net, step, head_dir, k=0, max_k=r, **environment)
+    # 虽然是从0开始,但是线会自然变直
     return result
 
 
