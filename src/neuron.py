@@ -224,13 +224,29 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
     return network
 
 
-def sep_and_close_nodes(network, r=10, decay=1, **environment):
+def sep_and_close_nodes(network, r=1, decay=1, **environment):
     """
     r 是邻域半径
     s-->m-->d
     m:network
     vx表示垂直向量,从sd中点指向x
     """
+    # def get_direction(target, s, sd, vm, max_distance):
+    #     """
+    #     这是一个和主函数高度耦合的函数 return (n,2)
+    #     target: (2,)
+    #     s, sd, vm: are the information of network
+    #     max_distance: (n,) determines how far the node would go
+    #     """
+    #     st = target - s
+    #     vt = ver_vec(sd, st)
+
+    #     indices1 = is_target_between_line(sd, st)  # target在线段sd中间的
+    #     indices2 = np.linalg.norm(vt - vm,
+    #                               axis=1) < max_distance  # target距离m不远的
+    #     vt[~(indices1 & indices2)] = np.inf  # 不在线段中间或者距离太远的,就设为inf不影响
+    #     return vt
+
     gate = environment.get("gate", 1)  # 最大单次步长
 
     m = network
@@ -242,15 +258,35 @@ def sep_and_close_nodes(network, r=10, decay=1, **environment):
     max_distance = 5 * r * step  # 上下最远范围
 
     vm = ver_vec(sd, m - s)  # sm 垂直 sd 分解
-    # NOTE: 这里需要保证vm没有零向量,不过一般是没有
+    # targets = environment.get("targets", None)
+    # if targets is not None:
+    #     vts = np.apply_along_axis(
+    #         func1d=lambda t: get_direction(t, s, sd, vm, 0.1 *
+    #                                        max_distance[:, 0]),
+    #         axis=1,
+    #         arr=targets,
+    #     )
+    #     indices = np.argmin(np.linalg.norm(vts, axis=2), axis=0)  # 模最小值所在索引
+    #     vt = vts[indices, np.arange(indices.shape[0]), :]
+    #     vt[vt == np.inf] = 0  # 无穷大的目标点t意味着不可达,置零
+    # else:
+    #     indices = np.array(False)
+    #     vt = [0, 0]
+    vt = [0, 0]
+    head_dir = vt - vm
+    unit_head_dir = unit_vector(head_dir)  # 前进的方向,决定node上下移动单位距离
 
-    # target_point = [0, 0]  # 如果能够确定离得最近的target点,就是那个了
-    head_dir = unit_vector(-vm)  # 前进的方向
-    step = np.linalg.norm(sd, axis=1, keepdims=True) * 0.5  # 一步的步长
-    step = step.clip(-gate, gate) * decay
-    base_net = s + 0.5 * sd + vm  # 水平先给分散了
-
-    result = get_away(base_net, step, head_dir, k=0, max_k=r, **environment)
+    # 水平分散
+    base_net = s + 0.5 * sd + vm
+    # node 往看到的目标点走一步
+    # base_net[indices] = base_net[indices] + unit_head_dir * step[indices]
+    # 避障
+    result = get_away(base_net,
+                      step,
+                      unit_head_dir,
+                      k=0,
+                      max_k=5 * r,
+                      **environment)
     # 虽然是从0开始,但是线会自然变直
     return result
 
