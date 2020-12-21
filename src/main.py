@@ -9,6 +9,7 @@ from plot_data import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
 import time
 import logging
+import random
 
 
 def get_parser():
@@ -106,9 +107,9 @@ def som(target,
     cities, obs, span, fbzs = norm_ans["result"][0], norm_ans["result"][
         1], norm_ans["dif"], norm_ans["fbzs"]
     obs = obs[['x', 'y']].to_numpy()
-
+    targets = cities[['x', 'y']].to_numpy()
     # The population size is 8 times the number of cities
-    n = cities.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
+    n = targets.shape[0] * 8  # 这里是神经元数目，别误解为人口(population)数目
     n = n + obs.shape[0] * 2 if obstacle is not None else n
     n = n + len(fbzs) * 2 if obstacle is not None else n
 
@@ -130,7 +131,8 @@ def som(target,
 
         # Choose a random city
         # DataFrame.values --> numpy.ndarray
-        city = cities.sample(1)[['x', 'y']].values
+        # city = cities.sample(1)[['x', 'y']].values
+        city = random.choice(targets)  # 随机选取一个目标
         winner_idx = select_closest(network, city)
         gaussian = get_neighborhood(winner_idx, n // 10, network.shape[0])
         city_delta = gaussian[:, np.newaxis] * (city - network)
@@ -176,7 +178,7 @@ def som(target,
         network = sep_and_close_nodes(
             network,
             decay=learning_rate,
-            targets=cities[['x', 'y']].to_numpy(),
+            targets=targets,
             obstacle=obs,  # 圆形障碍物
             obs_size=obs_size,  # 障碍物半径
             fbzs=fbzs,  # 不规则障碍物
@@ -191,7 +193,7 @@ def som(target,
         # Check for plotting interval
         if not i % 200:
             plot_network(
-                cities,
+                targets,
                 network,
                 name=data_path + '{:05d}.png'.format(i),
                 axes=axes,
@@ -229,7 +231,7 @@ def som(target,
 
     # 保存路径图片
     plot_network(
-        cities,
+        targets,
         network,
         name=data_path + 'final.png',
         obstacle=obs,

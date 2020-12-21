@@ -114,7 +114,9 @@ def plot_process(axes, cities, path, environment={}):
     # 画一条线标识最小精度
     axes.plot([0, 0], [0, 1 / span], linewidth=4, label="accuracy")
     # city 以点的形式
-    axes.scatter(cities['x'], cities['y'], color='red', s=4, label="target")
+    if type(cities).__name__ == 'DataFrame':
+        cities = cities[['x', 'y']].to_numpy()
+    axes.scatter(cities[:, 0], cities[:, 1], color='red', s=4, label="target")
     # path 以有向线段的形式
     if type(path).__name__ == 'DataFrame':
         path = path[['x', 'y']].to_numpy()
