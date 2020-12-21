@@ -290,6 +290,11 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
         **environment,
     )
     # 虽然是从0开始,但是线会自然变直
+
+    winner_indices = environment.get("winner_indices", None)  # 胜者不动
+    if winner_indices is not None:
+        result[winner_indices] = network[winner_indices]
+
     return result
 
 

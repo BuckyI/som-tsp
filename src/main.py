@@ -174,7 +174,11 @@ def som(target,
 
         # 修正结点分布,使之间隔更加均匀
         # network = sepaprate_node(network)
-
+        winner_indices = np.apply_along_axis(
+            func1d=lambda t: select_closest(network, t),
+            axis=1,
+            arr=targets,
+        )  # 胜者不改变
         network = sep_and_close_nodes(
             network,
             decay=learning_rate,
@@ -183,6 +187,7 @@ def som(target,
             obs_size=obs_size,  # 障碍物半径
             fbzs=fbzs,  # 不规则障碍物
             gate=gate,  # 最大更新步长
+            winner_indices=winner_indices,
         )
         # Decay the variables
         # 学习率更新 对应了 e^{-t/t0} t0=33332.83
