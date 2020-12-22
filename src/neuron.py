@@ -145,8 +145,9 @@ def unit_ver_vec(vector):
 def unit_vector(vector):
     "vector.shape==(n,2) 返回单位向量"
     v = vector.copy()
-    v /= np.linalg.norm(v, axis=1, keepdims=True)
-    v[np.isnan(v)] = 0  # 对于零向量,仍然返回零向量
+    a = np.linalg.norm(v, axis=1, keepdims=True)
+    indices = a[:, 0] != 0  # 找到不是零向量的
+    v[indices] = v[indices] / a[indices]
     return v
 
 
@@ -277,7 +278,8 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
     unit_head_dir = unit_vector(head_dir)  # 前进的方向,决定node上下移动单位距离
 
     # 水平分散
-    base_net = s + 0.5 * sd + vm
+    # base_net = s + 0.5 * sd + vm
+    base_net = s + 0.5 * sd  # 这种方法舍弃了结点之前的经验,收敛速度更快,但是前期有震荡现象
     # node 往看到的目标点走一步
     # base_net[indices] = base_net[indices] + unit_head_dir * step[indices]
     # 避障
@@ -286,7 +288,8 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
         step,
         unit_head_dir,
         k=0,
-        max_k=5 * r / decay,  # 后面单个步长短但是最大总步长变大
+        # max_k=5 * r / decay,  # 后面单个步长短但是最大总步长变大
+        max_k=np.inf,
         **environment,
     )
     # 虽然是从0开始,但是线会自然变直
