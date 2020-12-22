@@ -2,7 +2,7 @@ import argparse
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz
+from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz, data_io
 from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon, sep_and_close_nodes
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot_data import plot_network, plot_route, update_figure
@@ -10,6 +10,8 @@ from gene_tsp import generate_tour
 import time
 import logging
 import random
+from sklearn.cluster import KMeans
+from sklearn.cluster import SpectralClustering
 
 
 def get_parser():
@@ -63,8 +65,9 @@ def main():
     logging.info("Problem loading completed.")
 
     # 获得路径结果
-    distance = som(target, 100000, 0.8, obstacle, fbzs,
-                   data_path)  # from neuron 0 开始的路径 index
+    # distance = som(target, 100000, 0.8, obstacle, fbzs,
+    #                data_path)  # from neuron 0 开始的路径 index
+    distance = multi_som(target, 100000, 0.8, obstacle, fbzs, data_path)
 
     run_time = time.process_time() - start_time
     logging.info('SOM training completed. Running time: %s Seconds', run_time)
@@ -247,6 +250,150 @@ def som(target,
 
     # 计算路径距离
     distance = route_distance(network) * span  # 恢复到原坐标系下的距离
+    logging.info('Route found of length %s', distance)
+
+    return distance
+
+
+class Network():
+    def __init__(self, network, num, targets, radius):
+        self.network = network
+        self.num = num  # 神经元结点数目
+        self.targets = targets
+        self.radius = radius  # 用在邻域函数里面的邻域半径
+        self.old_net = 0
+
+    def get_delta(self):
+        result = np.linalg.norm(self.network - self.old_net, axis=1).max()
+        self.old_net = self.network.copy()
+        return result
+
+
+def multi_som(target,
+              iterations,
+              learning_rate=0.8,
+              obstacle=None,
+              fbzs=None,
+              data_path="assets/"):
+    # 读取数据并进行归一化处理
+    logging.info('multi_som loading data')
+    targets = target.copy()[['x', 'y']]
+    obs = obstacle.copy()[['x', 'y']] if obstacle is not None else None
+
+    norm_ans = normalization(fbzs, targets, obs)
+    targets, obs, span, fbzs = norm_ans["result"][0], norm_ans["result"][
+        1], norm_ans["dif"], norm_ans["fbzs"]
+    # 将数据统一转化为ndarray类型
+    obs = obs[['x', 'y']].to_numpy()
+    targets = targets[['x', 'y']].to_numpy()
+
+    # 一些便于程序运行的设定
+    axes = update_figure()  # set up a figure
+    old_delta = []
+    gate = 1 / span  # 收敛条件设定，精度的映射
+    obs_size = 4 * gate
+
+    # 聚类划分环
+    k = 2
+    labels = KMeans(n_clusters=k).fit_predict(targets)
+
+    Network_group = []  # 按照聚类结果创建的Network
+    for i in range(k):
+        sub_targets = targets[labels == i]
+        num = sub_targets.shape[0] * 10
+        radius = num
+        sub_network = generate_network(num)
+        Network_group.append(Network(sub_network, num, sub_targets, radius))
+
+    logging.info('%s network created', len(Network_group))
+    logging.info('Starting iterations:')
+
+    for i in range(iterations):
+        if not i % 100:
+            print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
+
+        for net in Network_group:
+            # 常规SOM
+            target = random.choice(net.targets)
+            winner_idx = select_closest(net.network, target)
+            gaussian = get_neighborhood(winner_idx, net.radius // 10, net.num)
+            target_delta = gaussian[:, np.newaxis] * (target - net.network)
+            net.network += learning_rate * target_delta
+
+            # 选取最接近目标点的获胜结点,其他结点往距离最小处移动
+            winner_indices = np.apply_along_axis(
+                func1d=lambda t: select_closest(net.network, t),
+                axis=1,
+                arr=net.targets,
+            )  # 胜者不改变
+            net.network = sep_and_close_nodes(
+                net.network,
+                decay=learning_rate,
+                targets=net.targets,
+                obstacle=obs,  # 圆形障碍物
+                obs_size=obs_size,  # 障碍物半径
+                fbzs=fbzs,  # 不规则障碍物
+                gate=gate,  # 最大更新步长
+                winner_indices=winner_indices,
+            )
+
+        # Decay the variables
+        learning_rate = learning_rate * 0.99997
+        for net in Network_group:
+            net.radius *= 0.9997
+
+        # Check for plotting interval
+        if not i % 200:
+            plot_network(
+                targets,
+                neurons=None,
+                name=data_path + '{:05d}.png'.format(i),
+                axes=axes,
+                obstacle=obs,
+                obs_size=obs_size,
+                span=span,
+                fbzs=fbzs,
+                Networks=Network_group,
+            )
+            update_figure(axes, clean=True)
+
+        # Check if any parameter has completely decayed. 收敛判断
+        if max([net.radius for net in Network_group]) < 1:
+            finish_info = 'Radius has completely decayed.'
+            break
+        if learning_rate < 0.001:
+            finish_info = 'Learning rate has completely decayed.'
+            break
+        for net in Network_group:
+            old_delta.append(net.get_delta())
+            if len(old_delta) > 10 * targets.shape[0]:  # 避免概率影响收敛
+                old_delta.pop(0)
+        if max(old_delta) < gate:
+            # 当迭代变化最大值还小于设定的精度时就停止
+            finish_info = "Max movement has reduced to {},".format(
+                max(old_delta) * span)
+            break
+
+    # 训练完成后进行的工作
+    finish_info += "finishing execution at {} iterations".format(i)
+    logging.info(finish_info)
+
+    # 保存路径图片
+    plot_network(
+        targets,
+        neurons=None,
+        name=data_path + 'final.png',
+        obstacle=obs,
+        obs_size=obs_size,
+        span=span,
+        fbzs=fbzs,
+        Networks=Network_group,
+    )
+
+    # 计算路径距离
+    distance = 0
+    for net in Network_group:
+        distance += route_distance(net.network) * span  # 恢复到原坐标系下的距离
     logging.info('Route found of length %s', distance)
 
     return distance

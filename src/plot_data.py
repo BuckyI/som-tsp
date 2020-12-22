@@ -110,6 +110,24 @@ def plot_process(axes, cities, path, environment={}):
     axes: [axes] unused 如果传入一个 axes Object，将在其上作图并返回，而不是保存到文件
     environment: [dict] of DataFrame/ndarray
     """
+    def draw_network(path, axes):
+        # path 以有向线段的形式
+        if type(path).__name__ == 'DataFrame':
+            path = path[['x', 'y']].to_numpy()
+        vec = get_route_vector(path, d=0, t=0)
+        axes.quiver(
+            path[:, 0],  # X
+            path[:, 1],  # Y
+            vec[:, 0],  # U
+            vec[:, 1],  # V
+            angles='xy',
+            scale_units='xy',
+            scale=1,  # 长短
+            units='xy',
+            width=0.003,  # 粗细
+            pivot='tail',
+            color="#6495ED")
+
     span = environment.get("span", None)
     # 画一条线标识最小精度
     axes.plot([0, 0], [0, 1 / span], linewidth=4, label="accuracy")
@@ -117,22 +135,14 @@ def plot_process(axes, cities, path, environment={}):
     if type(cities).__name__ == 'DataFrame':
         cities = cities[['x', 'y']].to_numpy()
     axes.scatter(cities[:, 0], cities[:, 1], color='red', s=4, label="target")
-    # path 以有向线段的形式
-    if type(path).__name__ == 'DataFrame':
-        path = path[['x', 'y']].to_numpy()
-    vec = get_route_vector(path, d=0, t=0)
-    axes.quiver(
-        path[:, 0],  # X
-        path[:, 1],  # Y
-        vec[:, 0],  # U
-        vec[:, 1],  # V
-        angles='xy',
-        scale_units='xy',
-        scale=1,  # 长短
-        units='xy',
-        width=0.003,  # 粗细
-        pivot='tail',
-        color="#6495ED")
+    # 画network
+    if path is not None:
+        draw_network(path, axes)
+    else:
+        Network_group = environment.get("Networks", None)
+        if Network_group is not None:
+            for net in Network_group:
+                draw_network(net.network, axes)
 
     obs = environment.get("obstacle", None)
     obs_size = environment.get("obs_size", None)
