@@ -3,6 +3,18 @@ import numpy as np
 import imageio
 import os
 import logging
+import pickle
+
+
+def data_io(mode="in", variable=None, filename='test.pickle'):
+
+    if mode == 'in':
+        with open(filename, 'wb') as f:
+            pickle.dump(variable, f)
+            logging.info('Variable saved to %s' % filename)
+    elif mode == 'out':
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
 
 
 def read_tsp(filename):
