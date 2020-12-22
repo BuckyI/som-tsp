@@ -25,7 +25,22 @@
                 "-f",
                 "assets/problem 2020-12-10 17-33-35/fbz.fbz"
             ]
-        }
+        },
+        // {
+        //     "name": "Python: main",
+        //     "type": "python",
+        //     "request": "launch",
+        //     "program": "C:/Users/45489/Documents/GitHub/som-tsp/src/main.py",
+        //     "console": "integratedTerminal",
+        //     "args": [
+        //         "-t",
+        //         "assets/problem 2020-12-03 15-10-31/arr.tsp",
+        //         "-o",
+        //         "assets/problem 2020-12-03 15-10-31/obs.obs",
+        //         "-f",
+        //         "assets/problem 2020-12-03 15-10-31/fbz.fbz"
+        //     ]
+        // }
     ]
 }
 // 调试测试时间,在命令行使用如下代码

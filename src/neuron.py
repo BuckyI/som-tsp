@@ -185,18 +185,47 @@ def sepaprate_node(network):
     return network + np.roll(delta, 1, axis=0)
 
 
-def get_away(network, step, head_dir, k=0, max_k=5, **environment):
-    "network 沿着 dir 方向脱离障碍物, 最大步长为 max_k*step"
-
-    def get_index(network, **environment):
-        # 获得处于障碍物内部的结点的索引
+def get_troubled_indices(network, div=1, step=0, v=None, **environment):
+    """
+    div int; v ndarray
+    用来确定network结点连线分成div份,每个等分点也都没在障碍物里
+    v是从network node_i 出发到 node_i+1 的delta
+    step:沿着unit_v最多走step=div-1步,因为第div步就是下一个结点了
+    step初始为0,表示源节点
+    """
+    if div == 1 or v is None:  # 表示不对节点之间线段上的点进行判断
         return np.apply_along_axis(is_node_in_trouble, 1, network,
                                    **environment)
+    elif step == div - 1:  # 到达了需要判断的最后一个点
+        return np.apply_along_axis(is_node_in_trouble, 1, network,
+                                   **environment)
+    else:
+        # 获得处于障碍物内部的结点的索引
+        indices = np.apply_along_axis(is_node_in_trouble, 1,
+                                      network + step * v / div, **environment)
 
+        new_indices = indices == False  # 判断为不在障碍物内的点
+        if new_indices.any():
+            # 如果还存在判断为不在障碍物内的点,进行一次更加严苛的迭代判断
+            indices[new_indices] = get_troubled_indices(
+                network=network[new_indices],
+                div=div,
+                step=step + 1,  # 走的更远1步,一直到div-1步,如果都没在障碍物内,才算不在
+                v=v[new_indices],
+                **environment,
+            )
+        return indices
+
+
+def get_away(network, step, head_dir, k=0, max_k=5, **environment):
+    "network 沿着 dir 方向脱离障碍物, 最大步长为 max_k*step"
+    # 调用 get_troubled_indices 的参数
+    div = 2
+    v = get_route_vector(network)
     # step 1 update and find the bad nodes
     if k == 0:
         # k==0 时更新数值为0,省去第一轮计算
-        new_index = get_index(network, **environment)
+        new_index = get_troubled_indices(network, div=div, v=v, **environment)
     elif k > max_k:
         # k 过大时,不进行更新,限制get_away的更新幅度(最大步长)
         new_index = np.array(False)
@@ -204,8 +233,8 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
         # 更新
         up = network + k * step * head_dir
         down = network - k * step * head_dir
-        good_up = ~get_index(up, **environment)
-        good_down = ~get_index(down, **environment)
+        good_up = ~get_troubled_indices(up, div=div, v=v, **environment)
+        good_down = ~get_troubled_indices(down, div=div, v=v, **environment)
         network[good_down] = down[good_down]
         network[good_up] = up[good_up]
 
@@ -278,8 +307,11 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
     unit_head_dir = unit_vector(head_dir)  # 前进的方向,决定node上下移动单位距离
 
     # 水平分散
+    # decay越接近0,收敛越快,越容易震荡,但是后期形状基本定型,避免了震荡
+    base_net = s + 0.5 * sd + decay * vm
     # base_net = s + 0.5 * sd + vm
-    base_net = s + 0.5 * sd  # 这种方法舍弃了结点之前的经验,收敛速度更快,但是前期有震荡现象
+    # base_net = s + 0.5 * sd  # 这种方法舍弃了结点之前的经验,收敛速度更快,但是有震荡的风险
+
     # node 往看到的目标点走一步
     # base_net[indices] = base_net[indices] + unit_head_dir * step[indices]
     # 避障
