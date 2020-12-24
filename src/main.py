@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from io_helper import read_tsp, normalize, read_obs, normalization, get_gif, save_info, read_fbz, data_io
-from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon, sep_and_close_nodes
+from neuron import generate_network, get_neighborhood, get_route, get_ob_influences, get_route_vector, ver_vec, sepaprate_node, is_point_in_polygon, sep_and_close_nodes, cluster
 from distance import select_closest, route_distance  # , euclidean_distance
 from plot_data import plot_network, plot_route, update_figure
 from gene_tsp import generate_tour
@@ -11,7 +11,6 @@ import time
 import logging
 import random
 from sklearn.cluster import KMeans
-from sklearn.cluster import SpectralClustering
 
 
 def get_parser():
@@ -295,8 +294,7 @@ def multi_som(target,
 
     # 聚类划分环
     k = 2
-    labels = KMeans(n_clusters=k).fit_predict(targets)
-
+    labels = cluster(targets, n=k, fbzs=fbzs)
     Network_group = []  # 按照聚类结果创建的Network
     for i in range(k):
         sub_targets = targets[labels == i]

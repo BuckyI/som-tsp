@@ -1,6 +1,8 @@
 import numpy as np
 import logging
 from distance import select_closest
+from sklearn.cluster import KMeans
+from sklearn.cluster import SpectralClustering
 
 
 def test_plot(arr1, arr2=None, filename="test"):
@@ -404,3 +406,53 @@ def is_point_in_polygon(point, arr):
         point_start = point_end
     else:
         return -1 if (count % 2) == 0 else 1
+
+
+def is_pq_cross(p1, p2, q1, q2):
+    "判断P1P2,Q1Q2两个线段是否相交"
+
+    def cross_product(x, y):
+        return x[0] * y[1] - x[1] * y[0]
+
+    p1p2 = p2 - p1
+    q1q2 = q2 - q1
+    p1q1 = q1 - p1
+    p1q2 = q2 - p1
+    q1p1 = p1 - q1
+    q1p2 = p2 = q2
+    y1 = cross_product(p1p2, p1q1) * cross_product(p1p2, p1q2)
+    y2 = cross_product(q1q2, q1p1) * cross_product(q1q2, q1p2)
+    if y1 < 0 and y2 < 0:  # 不带等号不包括临界情况
+        return True
+    else:
+        return False
+
+
+def do_line_collapse(p1, p2, fbzs):
+    "判断P1P2线段是否与障碍物fbzs相交"
+    for fbz in fbzs:
+        for q1, q2 in zip(fbz, np.roll(fbz, 1, axis=0)):
+            if is_pq_cross(p1, p2, q1, q2):
+                return True
+    return False
+
+
+def get_affinity_matrix(targets, fbzs):
+    """targets:ndarray,fbzs:list of ndarray
+    return 修改过的SpectralClustering 需要的 affinity_matrix"""
+    raw = SpectralClustering(n_clusters=1).fit(targets).affinity_matrix_
+    for i, p1 in enumerate(targets):
+        for j, p2 in enumerate(targets[i + 1:, :]):
+            flag = do_line_collapse(p1, p2, fbzs)
+            if flag:
+                raw[[i, j], [j, i]] = 0  # 碰撞则不连接
+    return raw
+
+
+def cluster(targets, n=2, **environment):
+    fbzs = environment.get("fbzs", [])
+    affinity_matrix = get_affinity_matrix(targets, fbzs=fbzs)
+    sc = SpectralClustering(n_clusters=n,
+                            affinity='precomputed',
+                            assign_labels='kmeans')
+    return sc.fit_predict(affinity_matrix)
