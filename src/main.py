@@ -291,7 +291,7 @@ def multi_som(target,
     old_delta = []
     gate = 1 / span  # 收敛条件设定，精度的映射
     obs_size = 4 * gate
-    net_size = 20
+    net_size = 15
     # 聚类划分环
     k = 2
     labels = cluster(targets, n=k, fbzs=fbzs)
