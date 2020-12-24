@@ -219,6 +219,15 @@ def get_troubled_indices(network, div=1, step=0, v=None, **environment):
         return indices
 
 
+# def get_troubled_indices(network, **environment):
+#     "这是一个计算量很大的版本"
+#     indices1 = np.apply_along_axis(is_node_in_trouble, 1, network,
+#                                    **environment)
+#     fbzs = environment.get('fbzs', [])
+#     indices2 = do_net_collapse(network, fbzs)
+#     return np.logical_or(indices1, indices2)
+
+
 def get_away(network, step, head_dir, k=0, max_k=5, **environment):
     "network 沿着 dir 方向脱离障碍物, 最大步长为 max_k*step"
     # 调用 get_troubled_indices 的参数
@@ -360,6 +369,22 @@ def is_node_in_trouble(node, **environment):
             return True
 
     return False
+
+
+def do_net_collapse(network, fbzs):
+    indices = np.zeros(network.shape[0]) > 1  # 默认都没碰撞
+    M = network
+    S = np.roll(M, 1, axis=0)
+    D = np.roll(M, -1, axis=0)
+    for index in range(len(M)):
+        m, s, d = M[index], S[index], D[index]
+        if do_line_collapse(m, s, fbzs):
+            indices[index] = True
+        elif do_line_collapse(m, d, fbzs):
+            indices[index] = True
+        else:
+            pass  # indices[index]=False
+    return indices
 
 
 def is_point_in_polygon(point, arr):
