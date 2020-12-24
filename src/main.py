@@ -291,14 +291,14 @@ def multi_som(target,
     old_delta = []
     gate = 1 / span  # 收敛条件设定，精度的映射
     obs_size = 4 * gate
-
+    net_size = 20
     # 聚类划分环
     k = 2
     labels = cluster(targets, n=k, fbzs=fbzs)
     Network_group = []  # 按照聚类结果创建的Network
     for i in range(k):
         sub_targets = targets[labels == i]
-        num = sub_targets.shape[0] * 10
+        num = sub_targets.shape[0] * net_size
         radius = num
         sub_network = generate_network(num)
         Network_group.append(Network(sub_network, num, sub_targets, radius))
@@ -364,7 +364,7 @@ def multi_som(target,
             break
         for net in Network_group:
             old_delta.append(net.get_delta())
-            if len(old_delta) > 10 * targets.shape[0]:  # 避免概率影响收敛
+            if len(old_delta) > net_size * targets.shape[0]:  # 避免概率影响收敛
                 old_delta.pop(0)
         if max(old_delta) < gate:
             # 当迭代变化最大值还小于设定的精度时就停止

@@ -286,7 +286,7 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
     d = np.roll(m, -1, axis=0)
     sd = d - s  # 衡量区域宽度,对区域进行分割的依据
     step = (np.linalg.norm(sd, axis=1, keepdims=True) * 0.1).clip(
-        0.01 * gate, gate) * decay  # 一步的步长
+        0.0001 * gate, gate) * decay  # 一步的步长
     max_distance = 5 * r * step  # 上下最远范围
 
     vm = ver_vec(sd, m - s)  # sm 垂直 sd 分解
