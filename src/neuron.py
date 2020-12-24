@@ -187,7 +187,12 @@ def sepaprate_node(network):
     return network + np.roll(delta, 1, axis=0)
 
 
-def get_troubled_indices(network, div=1, step=0, v=None, **environment):
+def get_troubled_indices(network,
+                         div=1,
+                         step=0,
+                         v=None,
+                         v1=None,
+                         **environment):
     """
     div int; v ndarray
     用来确定network结点连线分成div份,每个等分点也都没在障碍物里
@@ -195,16 +200,24 @@ def get_troubled_indices(network, div=1, step=0, v=None, **environment):
     step:沿着unit_v最多走step=div-1步,因为第div步就是下一个结点了
     step初始为0,表示源节点
     """
-    if div == 1 or v is None:  # 表示不对节点之间线段上的点进行判断
+    if div == 1 or v is None or v1 is None:  # 表示不对节点之间线段上的点进行判断
         return np.apply_along_axis(is_node_in_trouble, 1, network,
                                    **environment)
     elif step == div - 1:  # 到达了需要判断的最后一个点
-        return np.apply_along_axis(is_node_in_trouble, 1, network,
-                                   **environment)
+        indices1 = np.apply_along_axis(is_node_in_trouble, 1,
+                                       network + step * v / div, **environment)
+        indices2 = np.apply_along_axis(is_node_in_trouble, 1,
+                                       network + step * v1 / div,
+                                       **environment)
+        return np.logical_or(indices1, indices2)
     else:
         # 获得处于障碍物内部的结点的索引
-        indices = np.apply_along_axis(is_node_in_trouble, 1,
-                                      network + step * v / div, **environment)
+        indices1 = np.apply_along_axis(is_node_in_trouble, 1,
+                                       network + step * v / div, **environment)
+        indices2 = np.apply_along_axis(is_node_in_trouble, 1,
+                                       network + step * v1 / div,
+                                       **environment)
+        indices = np.logical_or(indices1, indices2)
 
         new_indices = indices == False  # 判断为不在障碍物内的点
         if new_indices.any():
@@ -214,6 +227,7 @@ def get_troubled_indices(network, div=1, step=0, v=None, **environment):
                 div=div,
                 step=step + 1,  # 走的更远1步,一直到div-1步,如果都没在障碍物内,才算不在
                 v=v[new_indices],
+                v1=v1[new_indices],
                 **environment,
             )
         return indices
@@ -228,15 +242,26 @@ def get_troubled_indices(network, div=1, step=0, v=None, **environment):
 #     return np.logical_or(indices1, indices2)
 
 
-def get_away(network, step, head_dir, k=0, max_k=5, **environment):
+def get_away(network,
+             step,
+             head_dir,
+             k=0,
+             max_k=5,
+             v1=None,
+             v2=None,
+             **environment):
     "network 沿着 dir 方向脱离障碍物, 最大步长为 max_k*step"
     # 调用 get_troubled_indices 的参数
     div = 2
-    v = get_route_vector(network)
+
     # step 1 update and find the bad nodes
     if k == 0:
         # k==0 时更新数值为0,省去第一轮计算
-        new_index = get_troubled_indices(network, div=div, v=v, **environment)
+        new_index = get_troubled_indices(network,
+                                         div=div,
+                                         v=v1,
+                                         v1=v2,
+                                         **environment)
     elif k > max_k:
         # k 过大时,不进行更新,限制get_away的更新幅度(最大步长)
         new_index = np.array(False)
@@ -244,8 +269,10 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
         # 更新
         up = network + k * step * head_dir
         down = network - k * step * head_dir
-        good_up = ~get_troubled_indices(up, div=div, v=v, **environment)
-        good_down = ~get_troubled_indices(down, div=div, v=v, **environment)
+        good_up = ~get_troubled_indices(
+            up, div=div, v=v1, v1=v2, **environment)
+        good_down = ~get_troubled_indices(
+            down, div=div, v=v1, v1=v2, **environment)
         network[good_down] = down[good_down]
         network[good_up] = up[good_up]
 
@@ -259,6 +286,8 @@ def get_away(network, step, head_dir, k=0, max_k=5, **environment):
             head_dir=head_dir[new_index],
             k=k + 1,
             max_k=max_k,
+            v1=v1[new_index],
+            v2=v2[new_index],
             **environment,
         )
 
@@ -333,6 +362,8 @@ def sep_and_close_nodes(network, r=1, decay=1, **environment):
         k=0,
         # max_k=5 * r / decay,  # 后面单个步长短但是最大总步长变大
         max_k=np.inf,
+        v1=d - m,
+        v2=s - m,
         **environment,
     )
     # 虽然是从0开始,但是线会自然变直
